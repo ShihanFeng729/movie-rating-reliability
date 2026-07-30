@@ -18,3 +18,17 @@ and writes a checksum manifest, while Git ignores the downloaded files.
 ```bash
 python3 scripts/download_data.py --help
 ```
+
+## `collect_tmdb.py`
+
+Collects one or more TMDB discover pages into a timestamped local snapshot.
+Authentication comes from the `TMDB_BEARER_TOKEN` environment variable; the
+token is sent in the request header and is never written to the cache.
+
+```bash
+export TMDB_BEARER_TOKEN="your_api_read_access_token"
+python3 scripts/collect_tmdb.py --pages 1
+```
+
+Responses are cached for 24 hours by default. Add `--refresh` when a fresh
+snapshot must come directly from the API.

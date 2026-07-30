@@ -59,6 +59,21 @@ python3 scripts/download_data.py --movielens research
 See [`data/README.md`](data/README.md) for the folder meanings and download
 options.
 
+## Collect a TMDB snapshot
+
+After obtaining a TMDB API Read Access Token, keep it outside the code and make
+it available only in the terminal session:
+
+```bash
+export TMDB_BEARER_TOKEN="your_api_read_access_token"
+python3 scripts/collect_tmdb.py --pages 1
+```
+
+The collector caches responses, retries temporary API errors, respects TMDB
+rate-limit responses, and records UTC collection times. Real tokens, API
+caches, and raw snapshots are excluded from Git. See `.env.example` for the
+expected variable name.
+
 ## Planned data sources
 
 - [TMDB API](https://developer.themoviedb.org/docs/getting-started)

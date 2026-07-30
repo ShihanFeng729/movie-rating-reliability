@@ -29,3 +29,15 @@ python3 scripts/download_data.py --movielens research
 The command writes `external/download_manifest.json`, which records each
 source URL, local path, file size, SHA-256 checksum, and retrieval time.
 Existing files are skipped unless `--overwrite` is provided.
+
+## TMDB snapshots
+
+TMDB API responses are cached under `cache/tmdb/`. Each collection run creates
+a separate UTC-timestamped folder under `raw/tmdb/` containing:
+
+- `movies.jsonl`: one movie record per line
+- `metadata.json`: collection settings, page counts, source URLs, cache/API
+  status, and collection times
+
+Both locations are ignored by Git because they contain reproducible local data.
+See `scripts/README.md` for the collection command.
