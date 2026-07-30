@@ -1,0 +1,50 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+kaggle.json
+
+# Python environments
+.venv/
+venv/
+env/
+
+# Python cache and test output
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+
+# Raw, intermediate, and generated data
+data/raw/*
+!data/raw/.gitkeep
+data/interim/*
+!data/interim/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/external/*
+!data/external/.gitkeep
+data/cache/
+
+# Generated reports and runtime output
+reports/figures/*
+!reports/figures/.gitkeep
+logs/
+
+# Python packaging
+build/
+dist/
+*.egg-info/
