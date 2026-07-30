@@ -9,5 +9,23 @@ licensed, cached, or generated datasets.
 - `processed/`: analysis-ready datasets
 - `cache/`: replaceable API responses and download caches
 
-Future download commands and data-license notes will be documented here.
-Synthetic test fixtures will live under `tests/`, not in these data folders.
+Synthetic test fixtures live under `tests/`, not in these data folders.
+
+## Download commands
+
+The development-sized source files can be downloaded with:
+
+```bash
+python3 scripts/download_data.py
+```
+
+This obtains two IMDb files and the small MovieLens dataset. For the stable
+MovieLens 32M research dataset, run:
+
+```bash
+python3 scripts/download_data.py --movielens research
+```
+
+The command writes `external/download_manifest.json`, which records each
+source URL, local path, file size, SHA-256 checksum, and retrieval time.
+Existing files are skipped unless `--overwrite` is provided.
