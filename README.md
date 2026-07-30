@@ -37,8 +37,27 @@ movie-rating-reliability/
 └── tests/       # Automated tests using synthetic fixtures
 ```
 
-Each directory contains a short README explaining its role. Setup and run
-instructions will be added when the first executable pipeline is implemented.
+Each directory contains a short README explaining its role.
+
+## Download the source data
+
+No Python environment or extra package is required for this step. From the
+repository's top-level folder, run:
+
+```bash
+python3 scripts/download_data.py
+```
+
+This downloads IMDb plus the small MovieLens development dataset. The files
+stay under `data/external/` and are not committed to GitHub. When the analysis
+pipeline is ready for a full-scale run, choose the stable MovieLens 32M file:
+
+```bash
+python3 scripts/download_data.py --movielens research
+```
+
+See [`data/README.md`](data/README.md) for the folder meanings and download
+options.
 
 ## Planned data sources
 
