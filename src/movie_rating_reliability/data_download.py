@@ -58,7 +58,7 @@ StreamOpener = Callable[[str, int], BinaryIO]
 def _open_url(url: str, timeout: int) -> BinaryIO:
     request = Request(
         url,
-        headers={"User-Agent": "movie-rating-reliability/0.1 (portfolio project)"},
+        headers={"User-Agent": "movie-rating-reliability/0.1 (research project)"},
     )
     return urlopen(request, timeout=timeout)
 

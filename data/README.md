@@ -1,8 +1,10 @@
 # Data directory
 
 The repository tracks this directory structure but does not track raw,
-licensed, cached, or generated datasets.
+licensed, cached, or research-generated datasets. The fictional demo dataset
+is the explicit exception.
 
+- `demo/`: tracked fictional data that runs without downloads or API keys
 - `raw/`: immutable files downloaded from original sources
 - `external/`: third-party datasets such as IMDb and MovieLens
 - `interim/`: temporary outputs between processing steps
@@ -41,3 +43,13 @@ a separate UTC-timestamped folder under `raw/tmdb/` containing:
 
 Both locations are ignored by Git because they contain reproducible local data.
 See `scripts/README.md` for the collection command.
+
+## API-free demo data
+
+`demo/movie_ratings.csv` contains fictional, analysis-ready movie ratings on a
+common 1–10 scale. It is intentionally committed so a reviewer can run future
+analysis steps without credentials or large downloads. Regenerate it with:
+
+```bash
+python3 scripts/generate_demo_data.py
+```

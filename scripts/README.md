@@ -32,3 +32,12 @@ python3 scripts/collect_tmdb.py --pages 1
 
 Responses are cached for 24 hours by default. Add `--refresh` when a fresh
 snapshot must come directly from the API.
+
+## `generate_demo_data.py`
+
+Creates the small tracked dataset used when no downloads or API credentials are
+available. The output is deterministic and contains fictional movies only.
+
+```bash
+python3 scripts/generate_demo_data.py
+```

@@ -5,12 +5,12 @@ pipelines and interpretable prediction models.
 
 ## Status
 
-The project is in its planning and repository-setup phase. Data collection,
-analysis, and modeling are not implemented yet.
+The data download and API snapshot workflows are implemented. Analysis and
+modeling are not implemented yet.
 
 This is an independent post-course redevelopment of an earlier academic
 prototype. It uses a new Git history and will be redesigned for reproducibility,
-testing, transparent evaluation, and portfolio presentation.
+testing, transparent evaluation, and clear research communication.
 
 ## Core questions
 
@@ -74,14 +74,28 @@ rate-limit responses, and records UTC collection times. Real tokens, API
 caches, and raw snapshots are excluded from Git. See `.env.example` for the
 expected variable name.
 
+## Run without credentials
+
+The repository includes a small fictional dataset so the project can be
+reviewed without API keys or large downloads:
+
+```bash
+python3 scripts/generate_demo_data.py
+```
+
+This recreates `data/demo/movie_ratings.csv` deterministically. Its movie
+titles and ratings are synthetic and are clearly separated from real research
+data.
+
 ## Planned data sources
 
 - [TMDB API](https://developer.themoviedb.org/docs/getting-started)
 - [IMDb non-commercial datasets](https://developer.imdb.com/non-commercial-datasets/)
 - [MovieLens datasets](https://grouplens.org/datasets/movielens/)
 
-Raw licensed datasets, generated outputs, API keys, and local environment files
-will not be committed.
+Raw licensed datasets, research-generated outputs, API keys, and local
+environment files will not be committed. The small fictional demo dataset is
+the explicit exception.
 
 ## Development approach
 
@@ -93,4 +107,4 @@ will be reviewed and documented step by step.
 
 The original course submission remains preserved separately at
 [dsci510_spring2026_final_project](https://github.com/ShihanFeng729/dsci510_spring2026_final_project).
-All portfolio-oriented redevelopment will happen in this repository.
+All continued redevelopment will happen in this repository.
