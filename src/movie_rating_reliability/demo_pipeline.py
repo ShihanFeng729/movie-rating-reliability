@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from movie_rating_reliability.demo_data import build_demo_movies, write_demo_csv
+from movie_rating_reliability.evaluation import evaluate_rating_csv
 
 
 RATING_COLUMNS = (
@@ -73,11 +74,21 @@ def run_demo_pipeline(project_root: Path) -> dict[str, Any]:
 
     demo_path = project_root / "data" / "demo" / "movie_ratings.csv"
     report_path = project_root / "reports" / "generated" / "demo_summary.json"
+    evaluation_path = (
+        project_root / "reports" / "generated" / "reliability_summary.json"
+    )
 
     write_demo_csv(demo_path, build_demo_movies())
     summary = summarize_demo_csv(demo_path)
+    evaluation = evaluate_rating_csv(demo_path)
+    evaluation_path.parent.mkdir(parents=True, exist_ok=True)
+    evaluation_path.write_text(
+        json.dumps(evaluation, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
     summary["data_path"] = str(demo_path.relative_to(project_root))
     summary["report_path"] = str(report_path.relative_to(project_root))
+    summary["evaluation_path"] = str(evaluation_path.relative_to(project_root))
 
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(

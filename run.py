@@ -20,6 +20,7 @@ def main() -> None:
     print(f"Complete across all platforms: {summary['complete_row_count']}")
     print(f"Data: {summary['data_path']}")
     print(f"Summary: {summary['report_path']}")
+    print(f"Reliability metrics: {summary['evaluation_path']}")
 
 
 if __name__ == "__main__":
