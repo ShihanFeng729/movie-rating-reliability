@@ -8,6 +8,19 @@ pipelines and interpretable prediction models.
 The data download and API snapshot workflows are implemented. Analysis and
 modeling are not implemented yet.
 
+## Quick start
+
+Run the complete credential-free demo from the repository root:
+
+```bash
+python3 run.py
+```
+
+This single command regenerates the fictional dataset, validates identifiers,
+missing values, and rating ranges, then writes a data-quality summary to
+`reports/generated/demo_summary.json`. It does not require a virtual
+environment, third-party package, network connection, or API key.
+
 This is an independent post-course redevelopment of an earlier academic
 prototype. It uses a new Git history and will be redesigned for reproducibility,
 testing, transparent evaluation, and clear research communication.

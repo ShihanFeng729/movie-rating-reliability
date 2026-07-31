@@ -42,6 +42,8 @@ data/cache/
 # Generated reports and runtime output
 reports/figures/*
 !reports/figures/.gitkeep
+reports/generated/*
+!reports/generated/.gitkeep
 logs/
 
 # Python packaging
