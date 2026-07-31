@@ -1,5 +1,7 @@
 # Movie Rating Reliability
 
+[![Tests](https://github.com/ShihanFeng729/movie-rating-reliability/actions/workflows/tests.yml/badge.svg)](https://github.com/ShihanFeng729/movie-rating-reliability/actions/workflows/tests.yml)
+
 Cross-platform movie rating reliability analysis with reproducible data
 pipelines and interpretable prediction models.
 
@@ -99,6 +101,22 @@ python3 scripts/generate_demo_data.py
 This recreates `data/demo/movie_ratings.csv` deterministically. Its movie
 titles and ratings are synthetic and are clearly separated from real research
 data.
+
+## Tests
+
+Create an isolated environment, install the pinned development dependency, and
+run the full suite:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+python -m pytest
+```
+
+On Windows, activate the environment with `.venv\Scripts\activate` instead.
+GitHub Actions runs the same tests and the credential-free pipeline on Python
+3.11, 3.12, 3.13, and 3.14 for every pull request and every push to `main`.
 
 ## Planned data sources
 
