@@ -10,7 +10,7 @@ modeling are not implemented yet.
 
 This is an independent post-course redevelopment of an earlier academic
 prototype. It uses a new Git history and will be redesigned for reproducibility,
-testing, transparent evaluation, and portfolio presentation.
+testing, transparent evaluation, and clear research communication.
 
 ## Core questions
 
@@ -107,4 +107,4 @@ will be reviewed and documented step by step.
 
 The original course submission remains preserved separately at
 [dsci510_spring2026_final_project](https://github.com/ShihanFeng729/dsci510_spring2026_final_project).
-All portfolio-oriented redevelopment will happen in this repository.
+All continued redevelopment will happen in this repository.

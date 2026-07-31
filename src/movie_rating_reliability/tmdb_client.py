@@ -163,7 +163,7 @@ class TmdbClient:
             headers={
                 "Accept": "application/json",
                 "Authorization": f"Bearer {self.bearer_token}",
-                "User-Agent": "movie-rating-reliability/0.1 (portfolio project)",
+                "User-Agent": "movie-rating-reliability/0.1 (research project)",
             },
         )
 
