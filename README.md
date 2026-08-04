@@ -20,7 +20,8 @@ python3 run.py
 
 This single command regenerates the fictional dataset, validates identifiers,
 missing values, and rating ranges, then writes a data-quality summary to
-`reports/generated/demo_summary.json`. It does not require a virtual
+`reports/generated/demo_summary.json` and pairwise reliability metrics to
+`reports/generated/reliability_summary.json`. It does not require a virtual
 environment, third-party package, network connection, or API key.
 
 This is an independent post-course redevelopment of an earlier academic
@@ -117,6 +118,14 @@ python -m pytest
 On Windows, activate the environment with `.venv\Scripts\activate` instead.
 GitHub Actions runs the same tests and the credential-free pipeline on Python
 3.11, 3.12, 3.13, and 3.14 for every pull request and every push to `main`.
+
+## Current evaluation
+
+The demo pipeline reports overlap, mean platform difference, MAE, Pearson
+correlation, Spearman rank correlation, and deterministic paired-bootstrap
+intervals for each platform pair. See
+[`docs/methodology.md`](docs/methodology.md) for matching rules, metric
+interpretation, and limitations.
 
 ## Planned data sources
 
