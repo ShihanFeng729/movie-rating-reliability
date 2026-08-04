@@ -7,8 +7,8 @@ pipelines and interpretable prediction models.
 
 ## Status
 
-The data download and API snapshot workflows are implemented. Analysis and
-modeling are not implemented yet.
+The reproducible data, reliability-analysis, and first interpretable-model
+workflows are implemented. Real-data model evaluation remains future work.
 
 ## Quick start
 
@@ -21,7 +21,9 @@ python3 run.py
 This single command regenerates the fictional dataset, validates identifiers,
 missing values, and rating ranges, then writes a data-quality summary to
 `reports/generated/demo_summary.json` and pairwise reliability metrics to
-`reports/generated/reliability_summary.json`. It does not require a virtual
+`reports/generated/reliability_summary.json`. It also evaluates an
+interpretable IMDb-rating baseline and writes
+`reports/generated/prediction_summary.json`. It does not require a virtual
 environment, third-party package, network connection, or API key.
 
 This is an independent post-course redevelopment of an earlier academic
@@ -126,6 +128,14 @@ correlation, Spearman rank correlation, and deterministic paired-bootstrap
 intervals for each platform pair. See
 [`docs/methodology.md`](docs/methodology.md) for matching rules, metric
 interpretation, and limitations.
+
+## Current prediction model
+
+The first prediction workflow uses ridge linear regression and leave-one-out
+cross-validation. It compares held-out IMDb rating predictions with a
+training-mean baseline and reports MAE, RMSE, R-squared, coefficients, and every
+held-out prediction. See [`docs/modeling.md`](docs/modeling.md) for the feature
+definitions, validation design, and limitations.
 
 ## Planned data sources
 

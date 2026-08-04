@@ -32,10 +32,14 @@ class DemoPipelineTests(unittest.TestCase):
                 / "generated"
                 / "reliability_summary.json"
             )
+            prediction_path = (
+                project_root / "reports" / "generated" / "prediction_summary.json"
+            )
 
             self.assertTrue(data_path.exists())
             self.assertTrue(report_path.exists())
             self.assertTrue(evaluation_path.exists())
+            self.assertTrue(prediction_path.exists())
             self.assertEqual(summary["row_count"], 30)
             self.assertEqual(summary["complete_row_count"], 25)
             self.assertEqual(summary["validation_status"], "passed")

@@ -21,6 +21,7 @@ def main() -> None:
     print(f"Data: {summary['data_path']}")
     print(f"Summary: {summary['report_path']}")
     print(f"Reliability metrics: {summary['evaluation_path']}")
+    print(f"Prediction evaluation: {summary['prediction_path']}")
 
 
 if __name__ == "__main__":
