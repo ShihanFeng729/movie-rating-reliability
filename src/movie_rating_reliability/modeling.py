@@ -1,0 +1,273 @@
+"""Interpretable IMDb rating baseline using only the standard library."""
+
+from __future__ import annotations
+
+import csv
+from dataclasses import dataclass
+import math
+from pathlib import Path
+from statistics import fmean
+from typing import Sequence
+
+
+RATING_MINIMUM = 1.0
+RATING_MAXIMUM = 10.0
+
+
+@dataclass(frozen=True)
+class ModelDataset:
+    """Numeric feature matrix and labels prepared from complete movie rows."""
+
+    movie_ids: list[str]
+    feature_names: list[str]
+    features: list[list[float]]
+    targets: list[float]
+    reference_genre: str
+
+
+def load_model_dataset(path: Path) -> ModelDataset:
+    """Load complete rows and create explicit, reproducible model features."""
+
+    with path.open(encoding="utf-8", newline="") as file:
+        rows = list(csv.DictReader(file))
+    if not rows:
+        raise ValueError("Model dataset contains no rows.")
+
+    required = {
+        "movie_id",
+        "release_year",
+        "genre",
+        "tmdb_rating_10",
+        "tmdb_vote_count",
+        "imdb_rating_10",
+        "movielens_rating_10",
+        "movielens_rating_count",
+    }
+    missing = required.difference(rows[0])
+    if missing:
+        raise ValueError(f"Model dataset is missing columns: {sorted(missing)}")
+
+    complete_rows = [
+        row for row in rows if all(row[column].strip() for column in required)
+    ]
+    if len(complete_rows) < 3:
+        raise ValueError("Model evaluation requires at least three complete rows.")
+
+    genres = sorted({row["genre"].strip() for row in complete_rows})
+    reference_genre = genres[0]
+    encoded_genres = genres[1:]
+    feature_names = [
+        "tmdb_rating_10",
+        "movielens_rating_10",
+        "log10_tmdb_vote_count",
+        "log10_movielens_rating_count",
+        "release_decades_since_2000",
+        *(f"genre_{genre}" for genre in encoded_genres),
+    ]
+
+    movie_ids: list[str] = []
+    features: list[list[float]] = []
+    targets: list[float] = []
+    for row in complete_rows:
+        tmdb_count = int(row["tmdb_vote_count"])
+        movielens_count = int(row["movielens_rating_count"])
+        if tmdb_count <= 0 or movielens_count <= 0:
+            raise ValueError("Rating counts must be positive before log transformation.")
+        target = float(row["imdb_rating_10"])
+        if not RATING_MINIMUM <= target <= RATING_MAXIMUM:
+            raise ValueError("IMDb target rating is outside the 1–10 scale.")
+
+        genre = row["genre"].strip()
+        movie_ids.append(row["movie_id"].strip())
+        features.append(
+            [
+                float(row["tmdb_rating_10"]),
+                float(row["movielens_rating_10"]),
+                math.log10(tmdb_count),
+                math.log10(movielens_count),
+                (int(row["release_year"]) - 2000) / 10,
+                *(1.0 if genre == candidate else 0.0 for candidate in encoded_genres),
+            ]
+        )
+        targets.append(target)
+
+    return ModelDataset(
+        movie_ids=movie_ids,
+        feature_names=feature_names,
+        features=features,
+        targets=targets,
+        reference_genre=reference_genre,
+    )
+
+
+def solve_linear_system(matrix: list[list[float]], vector: list[float]) -> list[float]:
+    """Solve a square linear system with partial-pivot Gaussian elimination."""
+
+    size = len(matrix)
+    if size == 0 or len(vector) != size or any(len(row) != size for row in matrix):
+        raise ValueError("Linear system dimensions do not match.")
+    augmented = [row.copy() + [value] for row, value in zip(matrix, vector)]
+
+    for column in range(size):
+        pivot = max(range(column, size), key=lambda row: abs(augmented[row][column]))
+        if abs(augmented[pivot][column]) < 1e-12:
+            raise ValueError("Linear system is singular.")
+        augmented[column], augmented[pivot] = augmented[pivot], augmented[column]
+        pivot_value = augmented[column][column]
+        augmented[column] = [value / pivot_value for value in augmented[column]]
+
+        for row in range(size):
+            if row == column:
+                continue
+            factor = augmented[row][column]
+            augmented[row] = [
+                current - factor * pivot_current
+                for current, pivot_current in zip(augmented[row], augmented[column])
+            ]
+    return [row[-1] for row in augmented]
+
+
+def fit_ridge(
+    features: Sequence[Sequence[float]],
+    targets: Sequence[float],
+    *,
+    alpha: float = 1.0,
+) -> list[float]:
+    """Fit ridge regression; the first returned coefficient is the intercept."""
+
+    if alpha < 0:
+        raise ValueError("Ridge alpha cannot be negative.")
+    if len(features) != len(targets) or len(features) < 2:
+        raise ValueError("Features and targets require at least two matching rows.")
+    width = len(features[0])
+    if width == 0 or any(len(row) != width for row in features):
+        raise ValueError("Feature rows must have one consistent positive width.")
+
+    design = [[1.0, *map(float, row)] for row in features]
+    parameter_count = width + 1
+    gram = [
+        [sum(row[left] * row[right] for row in design) for right in range(parameter_count)]
+        for left in range(parameter_count)
+    ]
+    for index in range(1, parameter_count):
+        gram[index][index] += alpha
+    rhs = [
+        sum(row[index] * target for row, target in zip(design, targets))
+        for index in range(parameter_count)
+    ]
+    return solve_linear_system(gram, rhs)
+
+
+def predict(coefficients: Sequence[float], features: Sequence[float]) -> float:
+    """Return one prediction, clipped to the declared rating scale."""
+
+    if len(coefficients) != len(features) + 1:
+        raise ValueError("Coefficient and feature dimensions do not match.")
+    raw_prediction = coefficients[0] + sum(
+        coefficient * value
+        for coefficient, value in zip(coefficients[1:], features)
+    )
+    return min(RATING_MAXIMUM, max(RATING_MINIMUM, raw_prediction))
+
+
+def regression_metrics(actual: Sequence[float], predicted: Sequence[float]) -> dict[str, float]:
+    """Return MAE, RMSE, and R-squared for matching observations."""
+
+    if len(actual) != len(predicted) or len(actual) < 2:
+        raise ValueError("Regression metrics require matching observations.")
+    mean_actual = fmean(actual)
+    squared_errors = [(truth - estimate) ** 2 for truth, estimate in zip(actual, predicted)]
+    total_squares = sum((truth - mean_actual) ** 2 for truth in actual)
+    if total_squares == 0:
+        raise ValueError("R-squared is undefined for a constant target.")
+    return {
+        "mae": fmean(abs(truth - estimate) for truth, estimate in zip(actual, predicted)),
+        "rmse": math.sqrt(fmean(squared_errors)),
+        "r_squared": 1 - sum(squared_errors) / total_squares,
+    }
+
+
+def evaluate_prediction_model(path: Path, *, alpha: float = 1.0) -> dict[str, object]:
+    """Compare ridge and training-mean predictions with leave-one-out validation."""
+
+    dataset = load_model_dataset(path)
+    model_predictions: list[float] = []
+    baseline_predictions: list[float] = []
+    for test_index, test_features in enumerate(dataset.features):
+        train_features = [
+            row for index, row in enumerate(dataset.features) if index != test_index
+        ]
+        train_targets = [
+            target for index, target in enumerate(dataset.targets) if index != test_index
+        ]
+        coefficients = fit_ridge(train_features, train_targets, alpha=alpha)
+        model_predictions.append(predict(coefficients, test_features))
+        baseline_predictions.append(fmean(train_targets))
+
+    model_metrics = regression_metrics(dataset.targets, model_predictions)
+    baseline_metrics = regression_metrics(dataset.targets, baseline_predictions)
+    final_coefficients = fit_ridge(dataset.features, dataset.targets, alpha=alpha)
+    coefficient_names = ["intercept", *dataset.feature_names]
+
+    return {
+        "dataset": "fictional_demo_movie_ratings",
+        "target": "imdb_rating_10",
+        "rating_scale": "1–10",
+        "complete_row_count": len(dataset.targets),
+        "evaluation_protocol": "leave_one_out_cross_validation",
+        "ridge_alpha": alpha,
+        "prediction_clipped_to_scale": True,
+        "baseline": "mean_imdb_rating_of_each_training_fold",
+        "feature_definitions": {
+            "tmdb_rating_10": "TMDB rating on the common 1–10 scale.",
+            "movielens_rating_10": "MovieLens rating converted to the 1–10 scale.",
+            "log10_tmdb_vote_count": "Base-10 logarithm of the TMDB vote count.",
+            "log10_movielens_rating_count": (
+                "Base-10 logarithm of the MovieLens rating count."
+            ),
+            "release_decades_since_2000": (
+                "Release year centered on 2000 and measured in decades."
+            ),
+            "genre_indicators": (
+                f"One-hot genre indicators; {dataset.reference_genre} is the "
+                "reference category."
+            ),
+        },
+        "model_metrics": _rounded_metrics(model_metrics),
+        "baseline_metrics": _rounded_metrics(baseline_metrics),
+        "mae_improvement_over_baseline": round(
+            baseline_metrics["mae"] - model_metrics["mae"], 4
+        ),
+        "rmse_improvement_over_baseline": round(
+            baseline_metrics["rmse"] - model_metrics["rmse"], 4
+        ),
+        "coefficients_fitted_on_all_complete_rows": {
+            name: round(value, 4)
+            for name, value in zip(coefficient_names, final_coefficients)
+        },
+        "cross_validation_predictions": [
+            {
+                "movie_id": movie_id,
+                "actual_imdb_rating_10": actual,
+                "model_prediction": round(model_prediction, 4),
+                "baseline_prediction": round(baseline_prediction, 4),
+                "model_residual_actual_minus_prediction": round(
+                    actual - model_prediction, 4
+                ),
+            }
+            for movie_id, actual, model_prediction, baseline_prediction in zip(
+                dataset.movie_ids,
+                dataset.targets,
+                model_predictions,
+                baseline_predictions,
+            )
+        ],
+        "interpretation_note": (
+            "This synthetic-data result validates the workflow only. It is not "
+            "evidence of performance on real or future movies."
+        ),
+    }
+
+
+def _rounded_metrics(metrics: dict[str, float]) -> dict[str, float]:
+    return {name: round(value, 4) for name, value in metrics.items()}
