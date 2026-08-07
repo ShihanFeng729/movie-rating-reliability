@@ -1,0 +1,74 @@
+{
+  "contract_version": "1.0",
+  "contract_id": "real_snapshot_v1",
+  "created_on": "2026-08-07",
+  "sampling_frame": "movielens_32m",
+  "random_seed": 510,
+  "sample_size": {
+    "candidate_movies": 1000,
+    "target_complete_movies": 750,
+    "minimum_complete_movies": 500
+  },
+  "eligibility": {
+    "title_type": "movie",
+    "exclude_adult_titles": true,
+    "release_year_min": 1980,
+    "release_year_max": 2022,
+    "minimum_votes": {
+      "movielens": 50,
+      "imdb": 500,
+      "tmdb": 50
+    },
+    "required_identifiers": [
+      "movielens_id",
+      "imdb_id",
+      "tmdb_id"
+    ]
+  },
+  "sampling_strategy": {
+    "method": "deterministic_stratified_random_sample",
+    "strata": [
+      "release_decade",
+      "movielens_rating_count_band"
+    ],
+    "rating_count_bands": [
+      "50-199",
+      "200-999",
+      "1000+"
+    ],
+    "selection_order": "stable_identifier_then_seeded_sample"
+  },
+  "sources": {
+    "movielens": {
+      "dataset": "MovieLens 32M",
+      "generated_on": "2023-10-13",
+      "files": [
+        "ratings.csv",
+        "movies.csv",
+        "links.csv"
+      ]
+    },
+    "imdb": {
+      "dataset": "IMDb non-commercial datasets",
+      "reference_time": "record_at_download",
+      "files": [
+        "title.basics.tsv.gz",
+        "title.ratings.tsv.gz"
+      ]
+    },
+    "tmdb": {
+      "dataset": "TMDB API",
+      "reference_time": "record_at_collection",
+      "collection_method": "movie_details_by_tmdb_id"
+    }
+  },
+  "evaluation_split": {
+    "method": "newest_release_years_holdout",
+    "test_fraction": 0.2,
+    "minimum_test_movies": 100
+  },
+  "temporal_alignment": {
+    "status": "source_reference_times_differ",
+    "required_action": "report_each_source_reference_time_and_treat_rating_drift_as_a_limitation"
+  }
+}
