@@ -32,6 +32,13 @@ The command writes `external/download_manifest.json`, which records each
 source URL, local path, file size, SHA-256 checksum, and retrieval time.
 Existing files are skipped unless `--overwrite` is provided.
 
+The first real-data sample is defined in
+[`config/real_snapshot_v1.json`](../config/real_snapshot_v1.json). It selects
+1,000 candidates from MovieLens 32M, targets 750 complete three-platform rows,
+and requires at least 500. See
+[`docs/real-data-snapshot.md`](../docs/real-data-snapshot.md) for the sampling,
+time-alignment, and evaluation decisions.
+
 ## TMDB snapshots
 
 TMDB API responses are cached under `cache/tmdb/`. Each collection run creates

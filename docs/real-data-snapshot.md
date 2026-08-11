@@ -1,0 +1,61 @@
+# V1 real-data snapshot contract
+
+## Decision
+
+The first real-data run starts with 1,000 candidate movies, targets 750 movies
+with complete TMDB, IMDb, and MovieLens fields, and stops if fewer than 500
+complete movies remain. The machine-readable definition is
+[`config/real_snapshot_v1.json`](../config/real_snapshot_v1.json).
+
+This three-level rule accounts for losses during identifier validation and
+field filtering. A minimum of 500 complete movies also preserves at least 100
+movies for the planned 20% holdout. The target of 750 leaves more room for
+descriptive checks by release era, genre, and rating-count band without making
+the initial API collection unnecessarily large.
+
+## Sampling frame
+
+MovieLens 32M is the sampling frame because its `links.csv` maps each
+MovieLens movie to IMDb and TMDB identifiers. Starting from these stable IDs is
+safer than sampling a TMDB popularity list and attempting title-only matching.
+
+Eligible records must:
+
+- be non-adult feature films released from 1980 through 2022;
+- have MovieLens, IMDb, and TMDB identifiers;
+- have at least 50 MovieLens ratings, 500 IMDb votes, and 50 TMDB votes; and
+- pass the existing conservative identifier and title/year checks.
+
+The upper release year is 2022 because MovieLens 32M was generated in October
+2023. This gives included films some opportunity to accumulate MovieLens
+ratings before that dataset's cutoff.
+
+The sample is deterministic with seed `510`. It is stratified by release decade
+and MovieLens rating-count band. Genre remains an analysis dimension rather
+than a strict sampling quota because movies can have multiple genres and sparse
+genre-by-decade combinations could otherwise make the rule unstable.
+
+## Source-time limitation
+
+The three sources are not simultaneous snapshots. MovieLens 32M is fixed in
+2023, while the IMDb files are refreshed daily and TMDB values are captured at
+collection time. Every output must preserve each source's own reference time.
+Rating drift between those times is a study limitation and must not be described
+as if all platforms were observed at the same instant.
+
+## Evaluation boundary
+
+The newest release years form a 20% holdout, with at least 100 test movies. The
+split is fixed before Ridge preprocessing or regularization choices are learned.
+This produces a more demanding check on newer, unseen movies than evaluating
+only on the same sample used to develop the model.
+
+Validate the contract without downloading data:
+
+```bash
+python3 scripts/validate_snapshot_contract.py
+```
+
+The next implementation step will build the candidate table from MovieLens
+32M, join IMDb fields by stable ID, and then collect TMDB movie details by the
+linked TMDB IDs. Raw and processed research data remain excluded from Git.
