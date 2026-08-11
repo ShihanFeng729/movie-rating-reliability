@@ -56,6 +56,17 @@ Validate the contract without downloading data:
 python3 scripts/validate_snapshot_contract.py
 ```
 
-The next implementation step will build the candidate table from MovieLens
-32M, join IMDb fields by stable ID, and then collect TMDB movie details by the
-linked TMDB IDs. Raw and processed research data remain excluded from Git.
+After downloading the real source files, build the pre-TMDB candidate table:
+
+```bash
+python3 scripts/build_real_candidates.py
+```
+
+This streams the 32 million MovieLens ratings instead of loading them all into
+memory, joins IMDb fields by stable ID, applies the contract, and writes 1,000
+rows to `data/interim/v1_candidates.csv`. A local audit summary is written to
+`reports/generated/v1_candidate_summary.json`. Both outputs remain excluded
+from Git.
+
+The next implementation step collects TMDB movie details for these linked IDs,
+applies the TMDB vote threshold, and measures the final complete-row count.

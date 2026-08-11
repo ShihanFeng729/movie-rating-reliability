@@ -39,6 +39,12 @@ and requires at least 500. See
 [`docs/real-data-snapshot.md`](../docs/real-data-snapshot.md) for the sampling,
 time-alignment, and evaluation decisions.
 
+Once the research files are present, create the ignored local candidate table:
+
+```bash
+python3 scripts/build_real_candidates.py
+```
+
 ## TMDB snapshots
 
 TMDB API responses are cached under `cache/tmdb/`. Each collection run creates

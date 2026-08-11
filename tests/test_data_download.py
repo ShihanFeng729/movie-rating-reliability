@@ -5,12 +5,14 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from urllib.error import URLError
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from movie_rating_reliability.data_download import (  # noqa: E402
+    _default_ssl_context,
     DatasetFile,
     download_datasets,
     download_file,
@@ -76,6 +78,33 @@ class DataDownloadTests(unittest.TestCase):
         self.assertEqual(record["status"], "existing")
         self.assertEqual(destination.read_bytes(), b"keep me")
 
+    def test_temporary_network_error_is_retried(self) -> None:
+        calls = 0
+        delays: list[float] = []
+
+        def flaky_opener(url: str, timeout: int) -> ClosingBytesIO:
+            nonlocal calls
+            del url, timeout
+            calls += 1
+            if calls < 3:
+                raise URLError("temporary disconnect")
+            return ClosingBytesIO(b"recovered")
+
+        record = download_file(
+            self.source,
+            self.data_dir,
+            opener=flaky_opener,
+            sleeper=delays.append,
+        )
+
+        self.assertEqual(record["status"], "downloaded")
+        self.assertEqual(calls, 3)
+        self.assertEqual(delays, [1.0, 2.0])
+        self.assertEqual(
+            (self.data_dir / "example" / "ratings.csv").read_bytes(),
+            b"recovered",
+        )
+
     def test_download_datasets_creates_manifest(self) -> None:
         records = download_datasets(
             self.data_dir,
@@ -96,6 +125,12 @@ class DataDownloadTests(unittest.TestCase):
 
         self.assertEqual(len(small), 3)
         self.assertEqual(research[0].filename, "ml-32m.zip")
+
+    def test_download_context_keeps_certificate_verification_enabled(self) -> None:
+        context = _default_ssl_context()
+
+        self.assertNotEqual(context.verify_mode, 0)
+        self.assertTrue(context.check_hostname)
 
 
 if __name__ == "__main__":

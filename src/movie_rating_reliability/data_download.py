@@ -8,7 +8,10 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import ssl
+import time
 from typing import BinaryIO, Callable
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
@@ -53,6 +56,7 @@ MOVIELENS_FILES = {
 }
 
 StreamOpener = Callable[[str, int], BinaryIO]
+Sleeper = Callable[[float], None]
 
 
 def _open_url(url: str, timeout: int) -> BinaryIO:
@@ -60,7 +64,18 @@ def _open_url(url: str, timeout: int) -> BinaryIO:
         url,
         headers={"User-Agent": "movie-rating-reliability/0.1 (research project)"},
     )
-    return urlopen(request, timeout=timeout)
+    return urlopen(request, timeout=timeout, context=_default_ssl_context())
+
+
+def _default_ssl_context() -> ssl.SSLContext:
+    """Use verified HTTPS, including the macOS system bundle when needed."""
+
+    verify_paths = ssl.get_default_verify_paths()
+    system_bundle = Path("/etc/ssl/cert.pem")
+    if verify_paths.cafile is None and verify_paths.capath is None:
+        if system_bundle.is_file():
+            return ssl.create_default_context(cafile=str(system_bundle))
+    return ssl.create_default_context()
 
 
 def sha256_file(path: Path) -> str:
@@ -80,24 +95,35 @@ def download_file(
     overwrite: bool = False,
     timeout: int = 60,
     opener: StreamOpener = _open_url,
+    attempts: int = 3,
+    sleeper: Sleeper = time.sleep,
 ) -> dict[str, object]:
     """Download one source safely and return its metadata."""
 
     destination = data_dir / source.dataset / source.filename
     destination.parent.mkdir(parents=True, exist_ok=True)
 
+    if attempts < 1:
+        raise ValueError("attempts must be positive.")
+
     status = "downloaded"
     if destination.exists() and not overwrite:
         status = "existing"
     else:
         partial = destination.with_suffix(destination.suffix + ".part")
-        try:
-            with opener(source.url, timeout) as response, partial.open("wb") as output:
-                shutil.copyfileobj(response, output)
-            partial.replace(destination)
-        except Exception:
-            partial.unlink(missing_ok=True)
-            raise
+        for attempt in range(1, attempts + 1):
+            try:
+                with opener(source.url, timeout) as response, partial.open(
+                    "wb"
+                ) as output:
+                    shutil.copyfileobj(response, output)
+                partial.replace(destination)
+                break
+            except Exception as error:
+                partial.unlink(missing_ok=True)
+                if attempt == attempts or not _is_retryable_download_error(error):
+                    raise
+                sleeper(float(2 ** (attempt - 1)))
 
     return {
         **asdict(source),
@@ -107,6 +133,12 @@ def download_file(
         "sha256": sha256_file(destination),
         "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
     }
+
+
+def _is_retryable_download_error(error: Exception) -> bool:
+    if isinstance(error, HTTPError):
+        return error.code in {408, 429} or 500 <= error.code < 600
+    return isinstance(error, (URLError, TimeoutError, ConnectionError, ssl.SSLError))
 
 
 def selected_sources(*, include_imdb: bool, movielens: str) -> list[DatasetFile]:
