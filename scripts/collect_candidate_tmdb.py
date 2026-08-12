@@ -17,6 +17,7 @@ from movie_rating_reliability.tmdb_candidate_collection import (  # noqa: E402
     collect_candidate_details,
 )
 from movie_rating_reliability.tmdb_client import TmdbClient  # noqa: E402
+from movie_rating_reliability.local_env import load_local_env  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
@@ -36,10 +37,12 @@ def main() -> None:
     args = parse_args()
     if args.limit is not None and args.limit < 1:
         raise SystemExit("--limit must be at least 1.")
+    load_local_env(PROJECT_ROOT / ".env")
     token = os.environ.get("TMDB_BEARER_TOKEN", "").strip()
-    if not token:
+    if not token or token == "replace_with_your_tmdb_api_read_access_token":
         raise SystemExit(
-            "TMDB_BEARER_TOKEN is not set. Export it in this terminal before running."
+            "TMDB_BEARER_TOKEN is not configured. Replace the placeholder in the "
+            "ignored local .env file, or export it in this terminal."
         )
     contract = json.loads(
         (PROJECT_ROOT / "config" / "real_snapshot_v1.json").read_text(

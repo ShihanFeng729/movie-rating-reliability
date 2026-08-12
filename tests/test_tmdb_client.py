@@ -13,7 +13,10 @@ from urllib.error import HTTPError, URLError
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from movie_rating_reliability.tmdb_client import TmdbClient  # noqa: E402
+from movie_rating_reliability.tmdb_client import (  # noqa: E402
+    TmdbClient,
+    _default_ssl_context,
+)
 
 
 class JsonResponse(BytesIO):
@@ -148,3 +151,8 @@ class TmdbClientTests(unittest.TestCase):
         self.assertIn("/movie/42?language=en-US", requested_urls[0])
         with self.assertRaises(ValueError):
             client.movie_details(0)
+
+    def test_default_https_context_verifies_certificates(self) -> None:
+        context = _default_ssl_context()
+        self.assertEqual(context.verify_mode, 2)
+        self.assertTrue(context.check_hostname)

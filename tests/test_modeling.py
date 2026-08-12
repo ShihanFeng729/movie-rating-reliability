@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 import unittest
+import csv
+import tempfile
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -10,6 +12,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from movie_rating_reliability.modeling import (  # noqa: E402
     evaluate_prediction_model,
+    evaluate_temporal_holdout,
     fit_ridge,
     load_model_dataset,
     predict,
@@ -55,6 +58,36 @@ class ModelingTests(unittest.TestCase):
     def test_metrics_reject_constant_target(self) -> None:
         with self.assertRaisesRegex(ValueError, "constant target"):
             regression_metrics([5.0, 5.0], [4.0, 6.0])
+
+    def test_temporal_holdout_accepts_real_v1_columns(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "real.csv"
+            fields = [
+                "movielens_id", "release_year", "genres", "tmdb_rating_10",
+                "tmdb_vote_count", "imdb_rating_10", "movielens_rating_10",
+                "movielens_rating_count",
+            ]
+            with path.open("w", newline="", encoding="utf-8") as file:
+                writer = csv.DictWriter(file, fieldnames=fields)
+                writer.writeheader()
+                for index in range(10):
+                    writer.writerow({
+                        "movielens_id": index + 1,
+                        "release_year": 2000 + index,
+                        "genres": "Drama,Comedy",
+                        "tmdb_rating_10": 5 + index / 10,
+                        "tmdb_vote_count": 100 + index,
+                        "imdb_rating_10": 5.1 + index / 10,
+                        "movielens_rating_10": 5.2 + index / 10,
+                        "movielens_rating_count": 200 + index,
+                    })
+            result = evaluate_temporal_holdout(
+                path, test_fraction=0.2, minimum_test_movies=2
+            )
+            self.assertEqual(result["train_movie_count"], 8)
+            self.assertEqual(result["test_movie_count"], 2)
+            self.assertEqual(result["test_year_min"], 2008)
+            self.assertIn("training rows only", result["preprocessing"])
 
 
 if __name__ == "__main__":

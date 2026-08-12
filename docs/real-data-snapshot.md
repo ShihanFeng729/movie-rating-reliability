@@ -83,3 +83,12 @@ outputs remain excluded from Git.
 
 For a small connection and credential check, use `--limit 3`. A later full run
 reuses those successful records and continues with the remaining candidates.
+
+The collection command automatically reads a local `.env` file. Copy
+`.env.example` to `.env`, replace the placeholder with the TMDB API Read Access
+Token, and never commit that file. After the complete dataset reaches the
+minimum, generate the V1 reliability and newest-movie holdout reports with:
+
+```bash
+python3 scripts/analyze_real_v1.py
+```
