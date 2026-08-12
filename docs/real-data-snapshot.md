@@ -92,3 +92,12 @@ minimum, generate the V1 reliability and newest-movie holdout reports with:
 ```bash
 python3 scripts/analyze_real_v1.py
 ```
+
+Build the unified local provenance manifest with:
+
+```bash
+python3 scripts/build_v1_source_manifest.py
+```
+
+The tracked provenance documentation is in
+[`v1-source-provenance.md`](v1-source-provenance.md).
