@@ -95,6 +95,23 @@ class TmdbClient:
             refresh=refresh,
         )
 
+    def movie_details(
+        self,
+        tmdb_id: int,
+        *,
+        language: str = "en-US",
+        refresh: bool = False,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Fetch one movie by its stable TMDB identifier."""
+
+        if tmdb_id <= 0:
+            raise ValueError("TMDB movie ID must be positive.")
+        return self.get(
+            f"/movie/{tmdb_id}",
+            {"language": language},
+            refresh=refresh,
+        )
+
     def get(
         self,
         endpoint: str,

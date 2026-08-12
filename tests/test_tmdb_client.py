@@ -132,3 +132,19 @@ class TmdbClientTests(unittest.TestCase):
         client = TmdbClient("token", self.cache_dir)
         with self.assertRaises(ValueError):
             client.discover_movies(page=501)
+
+    def test_movie_details_uses_stable_id_endpoint(self) -> None:
+        requested_urls = []
+
+        def opener(request: object, timeout: int) -> JsonResponse:
+            del timeout
+            requested_urls.append(request.full_url)
+            return JsonResponse(b'{"id": 42, "vote_count": 100}')
+
+        client = TmdbClient("token", self.cache_dir, opener=opener)
+        payload, _ = client.movie_details(42)
+
+        self.assertEqual(payload["id"], 42)
+        self.assertIn("/movie/42?language=en-US", requested_urls[0])
+        with self.assertRaises(ValueError):
+            client.movie_details(0)
