@@ -118,42 +118,70 @@ def evaluate_temporal_holdout(
 
     if not 0 < test_fraction < 1:
         raise ValueError("test_fraction must be between zero and one.")
-    dataset = load_model_dataset(path)
     with path.open(encoding="utf-8", newline="") as file:
         rows = list(csv.DictReader(file))
-    years_by_id = {
-        (row.get("movie_id") or row.get("movielens_id") or "").strip():
-        int(row["release_year"]) for row in rows
+    required = {
+        "release_year", "genres", "tmdb_rating_10", "tmdb_vote_count",
+        "imdb_rating_10", "movielens_rating_10", "movielens_rating_count",
     }
-    test_size = max(minimum_test_movies, math.ceil(len(dataset.targets) * test_fraction))
-    if test_size >= len(dataset.targets):
+    if not rows or not required.issubset(rows[0]):
+        raise ValueError("Real V1 dataset is empty or missing required columns.")
+    complete = [row for row in rows if all(row[column].strip() for column in required)]
+    test_size = max(minimum_test_movies, math.ceil(len(complete) * test_fraction))
+    if test_size >= len(complete):
         raise ValueError("Temporal holdout leaves no training movies.")
     ordered = sorted(
-        range(len(dataset.targets)),
-        key=lambda index: (years_by_id[dataset.movie_ids[index]], dataset.movie_ids[index]),
+        complete,
+        key=lambda row: (
+            int(row["release_year"]),
+            (row.get("movie_id") or row.get("movielens_id") or ""),
+        ),
     )
-    test_indices = set(ordered[-test_size:])
-    train_indices = [index for index in ordered if index not in test_indices]
-    test_order = [index for index in ordered if index in test_indices]
+    train_rows = ordered[:-test_size]
+    test_rows = ordered[-test_size:]
+    train_genres = sorted({_primary_genre(row["genres"]) for row in train_rows})
+    reference_genre = train_genres[0]
+    encoded_genres = train_genres[1:]
+    train_numeric = [_real_numeric_features(row) for row in train_rows]
+    means = [fmean(column) for column in zip(*train_numeric)]
+    scales = [
+        math.sqrt(fmean((value - mean) ** 2 for value in column)) or 1.0
+        for column, mean in zip(zip(*train_numeric), means)
+    ]
+
+    def transform(row: dict[str, str]) -> list[float]:
+        numeric = _real_numeric_features(row)
+        genre = _primary_genre(row["genres"])
+        return [
+            *((value - mean) / scale for value, mean, scale in zip(numeric, means, scales)),
+            *(1.0 if genre == candidate else 0.0 for candidate in encoded_genres),
+        ]
+
+    train_features = [transform(row) for row in train_rows]
+    test_features = [transform(row) for row in test_rows]
+    train_targets = [float(row["imdb_rating_10"]) for row in train_rows]
+    actual = [float(row["imdb_rating_10"]) for row in test_rows]
     coefficients = fit_ridge(
-        [dataset.features[index] for index in train_indices],
-        [dataset.targets[index] for index in train_indices], alpha=alpha,
+        train_features, train_targets, alpha=alpha,
     )
-    train_mean = fmean(dataset.targets[index] for index in train_indices)
-    actual = [dataset.targets[index] for index in test_order]
-    predictions = [predict(coefficients, dataset.features[index]) for index in test_order]
-    baseline = [train_mean] * len(test_order)
+    train_mean = fmean(train_targets)
+    predictions = [predict(coefficients, features) for features in test_features]
+    baseline = [train_mean] * len(test_rows)
     model_metrics = regression_metrics(actual, predictions)
     baseline_metrics = regression_metrics(actual, baseline)
     return {
         "dataset": "real_v1_movie_ratings",
         "target": "imdb_rating_10",
         "evaluation_protocol": "newest_release_years_holdout",
-        "train_movie_count": len(train_indices),
-        "test_movie_count": len(test_order),
-        "test_year_min": min(years_by_id[dataset.movie_ids[index]] for index in test_order),
-        "test_year_max": max(years_by_id[dataset.movie_ids[index]] for index in test_order),
+        "train_movie_count": len(train_rows),
+        "test_movie_count": len(test_rows),
+        "test_year_min": min(int(row["release_year"]) for row in test_rows),
+        "test_year_max": max(int(row["release_year"]) for row in test_rows),
         "ridge_alpha": alpha,
+        "preprocessing": (
+            "Numeric standardization and genre categories learned from training rows only."
+        ),
+        "reference_genre": reference_genre,
         "model_metrics": _rounded_metrics(model_metrics),
         "baseline_metrics": _rounded_metrics(baseline_metrics),
         "mae_improvement_over_baseline": round(
@@ -164,6 +192,20 @@ def evaluate_temporal_holdout(
             "alpha; later tuning must occur only inside the training portion."
         ),
     }
+
+
+def _real_numeric_features(row: dict[str, str]) -> list[float]:
+    tmdb_count = int(row["tmdb_vote_count"])
+    movielens_count = int(row["movielens_rating_count"])
+    if tmdb_count <= 0 or movielens_count <= 0:
+        raise ValueError("Rating counts must be positive before log transformation.")
+    return [
+        float(row["tmdb_rating_10"]),
+        float(row["movielens_rating_10"]),
+        math.log10(tmdb_count),
+        math.log10(movielens_count),
+        (int(row["release_year"]) - 2000) / 10,
+    ]
 
 
 def solve_linear_system(matrix: list[list[float]], vector: list[float]) -> list[float]:

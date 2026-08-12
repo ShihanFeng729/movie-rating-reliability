@@ -7,11 +7,14 @@ from email.utils import parsedate_to_datetime
 from hashlib import sha256
 import json
 from pathlib import Path
+import ssl
 import time
 from typing import Any, Callable
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+
+from movie_rating_reliability.data_download import _default_ssl_context
 
 
 API_BASE_URL = "https://api.themoviedb.org/3"
@@ -48,7 +51,7 @@ class TmdbClient:
         cache_hours: float = 24,
         max_retries: int = 3,
         timeout: int = 30,
-        opener: OpenUrl = urlopen,
+        opener: OpenUrl | None = None,
         sleeper: Sleep = time.sleep,
     ) -> None:
         if not bearer_token.strip():
@@ -63,7 +66,7 @@ class TmdbClient:
         self.cache_hours = cache_hours
         self.max_retries = max_retries
         self.timeout = timeout
-        self.opener = opener
+        self.opener = opener or _verified_urlopen
         self.sleeper = sleeper
 
     def discover_movies(
@@ -208,3 +211,9 @@ class TmdbClient:
                 self.sleeper(2**attempt)
 
         raise RuntimeError("Unreachable retry state.")
+
+
+def _verified_urlopen(request: Request, *, timeout: int) -> Any:
+    """Open verified HTTPS with the macOS system CA bundle when necessary."""
+
+    return urlopen(request, timeout=timeout, context=_default_ssl_context())

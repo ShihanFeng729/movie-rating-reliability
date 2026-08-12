@@ -87,6 +87,7 @@ class ModelingTests(unittest.TestCase):
             self.assertEqual(result["train_movie_count"], 8)
             self.assertEqual(result["test_movie_count"], 2)
             self.assertEqual(result["test_year_min"], 2008)
+            self.assertIn("training rows only", result["preprocessing"])
 
 
 if __name__ == "__main__":
