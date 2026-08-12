@@ -101,3 +101,12 @@ python3 scripts/build_v1_source_manifest.py
 
 The tracked provenance documentation is in
 [`v1-source-provenance.md`](v1-source-provenance.md).
+
+Audit and freeze the integrated dataset with:
+
+```bash
+python3 scripts/audit_real_v1.py
+```
+
+See [`v1-data-quality.md`](v1-data-quality.md) for the acceptance checks and
+real V1 loss accounting.
