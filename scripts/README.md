@@ -43,6 +43,9 @@ The command reads `TMDB_BEARER_TOKEN` from the shell or the ignored local
 `.env` file. Run `analyze_real_v1.py` after the complete dataset is collected
 to generate real pairwise reliability and temporal Ridge holdout reports.
 
+Run `build_v1_source_manifest.py` after collection to create the local source
+URL, version, reference-time, size, and checksum audit manifest.
+
 Responses are cached for 24 hours by default. Add `--refresh` when a fresh
 snapshot must come directly from the API.
 
