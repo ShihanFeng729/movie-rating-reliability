@@ -39,6 +39,10 @@ Each successful response is saved separately so an interrupted run can resume.
 python3 scripts/collect_candidate_tmdb.py
 ```
 
+The command reads `TMDB_BEARER_TOKEN` from the shell or the ignored local
+`.env` file. Run `analyze_real_v1.py` after the complete dataset is collected
+to generate real pairwise reliability and temporal Ridge holdout reports.
+
 Responses are cached for 24 hours by default. Add `--refresh` when a fresh
 snapshot must come directly from the API.
 

@@ -34,9 +34,7 @@ def load_model_dataset(path: Path) -> ModelDataset:
         raise ValueError("Model dataset contains no rows.")
 
     required = {
-        "movie_id",
         "release_year",
-        "genre",
         "tmdb_rating_10",
         "tmdb_vote_count",
         "imdb_rating_10",
@@ -53,7 +51,11 @@ def load_model_dataset(path: Path) -> ModelDataset:
     if len(complete_rows) < 3:
         raise ValueError("Model evaluation requires at least three complete rows.")
 
-    genres = sorted({row["genre"].strip() for row in complete_rows})
+    id_column = "movie_id" if "movie_id" in rows[0] else "movielens_id"
+    genre_column = "genre" if "genre" in rows[0] else "genres"
+    if id_column not in rows[0] or genre_column not in rows[0]:
+        raise ValueError("Model dataset requires a movie ID and genre column.")
+    genres = sorted({_primary_genre(row[genre_column]) for row in complete_rows})
     reference_genre = genres[0]
     encoded_genres = genres[1:]
     feature_names = [
@@ -77,8 +79,8 @@ def load_model_dataset(path: Path) -> ModelDataset:
         if not RATING_MINIMUM <= target <= RATING_MAXIMUM:
             raise ValueError("IMDb target rating is outside the 1–10 scale.")
 
-        genre = row["genre"].strip()
-        movie_ids.append(row["movie_id"].strip())
+        genre = _primary_genre(row[genre_column])
+        movie_ids.append(row[id_column].strip())
         features.append(
             [
                 float(row["tmdb_rating_10"]),
@@ -98,6 +100,70 @@ def load_model_dataset(path: Path) -> ModelDataset:
         targets=targets,
         reference_genre=reference_genre,
     )
+
+
+def _primary_genre(value: str) -> str:
+    """Use the first declared genre for a stable, compact baseline encoding."""
+
+    normalized = value.replace("|", ",")
+    genre = normalized.split(",", 1)[0].strip()
+    return genre or "Unknown"
+
+
+def evaluate_temporal_holdout(
+    path: Path, *, test_fraction: float = 0.2, minimum_test_movies: int = 100,
+    alpha: float = 1.0,
+) -> dict[str, object]:
+    """Evaluate Ridge on the newest movies, with preprocessing fixed by the file."""
+
+    if not 0 < test_fraction < 1:
+        raise ValueError("test_fraction must be between zero and one.")
+    dataset = load_model_dataset(path)
+    with path.open(encoding="utf-8", newline="") as file:
+        rows = list(csv.DictReader(file))
+    years_by_id = {
+        (row.get("movie_id") or row.get("movielens_id") or "").strip():
+        int(row["release_year"]) for row in rows
+    }
+    test_size = max(minimum_test_movies, math.ceil(len(dataset.targets) * test_fraction))
+    if test_size >= len(dataset.targets):
+        raise ValueError("Temporal holdout leaves no training movies.")
+    ordered = sorted(
+        range(len(dataset.targets)),
+        key=lambda index: (years_by_id[dataset.movie_ids[index]], dataset.movie_ids[index]),
+    )
+    test_indices = set(ordered[-test_size:])
+    train_indices = [index for index in ordered if index not in test_indices]
+    test_order = [index for index in ordered if index in test_indices]
+    coefficients = fit_ridge(
+        [dataset.features[index] for index in train_indices],
+        [dataset.targets[index] for index in train_indices], alpha=alpha,
+    )
+    train_mean = fmean(dataset.targets[index] for index in train_indices)
+    actual = [dataset.targets[index] for index in test_order]
+    predictions = [predict(coefficients, dataset.features[index]) for index in test_order]
+    baseline = [train_mean] * len(test_order)
+    model_metrics = regression_metrics(actual, predictions)
+    baseline_metrics = regression_metrics(actual, baseline)
+    return {
+        "dataset": "real_v1_movie_ratings",
+        "target": "imdb_rating_10",
+        "evaluation_protocol": "newest_release_years_holdout",
+        "train_movie_count": len(train_indices),
+        "test_movie_count": len(test_order),
+        "test_year_min": min(years_by_id[dataset.movie_ids[index]] for index in test_order),
+        "test_year_max": max(years_by_id[dataset.movie_ids[index]] for index in test_order),
+        "ridge_alpha": alpha,
+        "model_metrics": _rounded_metrics(model_metrics),
+        "baseline_metrics": _rounded_metrics(baseline_metrics),
+        "mae_improvement_over_baseline": round(
+            baseline_metrics["mae"] - model_metrics["mae"], 4
+        ),
+        "interpretation_note": (
+            "The newest movies were held out before fitting. This baseline uses a fixed "
+            "alpha; later tuning must occur only inside the training portion."
+        ),
+    }
 
 
 def solve_linear_system(matrix: list[list[float]], vector: list[float]) -> list[float]:
