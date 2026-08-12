@@ -30,6 +30,15 @@ export TMDB_BEARER_TOKEN="your_api_read_access_token"
 python3 scripts/collect_tmdb.py --pages 1
 ```
 
+## `collect_candidate_tmdb.py`
+
+Fetches TMDB movie details by the stable IDs in the fixed V1 candidate table.
+Each successful response is saved separately so an interrupted run can resume.
+
+```bash
+python3 scripts/collect_candidate_tmdb.py
+```
+
 Responses are cached for 24 hours by default. Add `--refresh` when a fresh
 snapshot must come directly from the API.
 

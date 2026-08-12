@@ -68,5 +68,18 @@ rows to `data/interim/v1_candidates.csv`. A local audit summary is written to
 `reports/generated/v1_candidate_summary.json`. Both outputs remain excluded
 from Git.
 
-The next implementation step collects TMDB movie details for these linked IDs,
-applies the TMDB vote threshold, and measures the final complete-row count.
+Collect TMDB movie details for the linked IDs with:
+
+```bash
+python3 scripts/collect_candidate_tmdb.py
+```
+
+The command requests `/movie/{tmdb_id}` directly, saves one local record per
+movie, and can resume after an interruption. It applies the 50-vote TMDB
+threshold and writes the joined complete rows to
+`data/processed/v1_movie_ratings.csv`. Its audit summary reports whether the
+750-movie target or 500-movie minimum was reached. Raw, processed, and audit
+outputs remain excluded from Git.
+
+For a small connection and credential check, use `--limit 3`. A later full run
+reuses those successful records and continues with the remaining candidates.
