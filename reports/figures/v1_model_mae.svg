@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="383" viewBox="0 0 900 383" role="img" aria-labelledby="title description">
+<title id="title">IMDb prediction on newer movies</title>
+<desc id="description">Temporal holdout of 189 movies from 2015–2022 · lower is better</desc>
+<rect width="100%" height="100%" fill="#ffffff" rx="18"/>
+<text x="48" y="52" font-family="Arial, sans-serif" font-size="27" font-weight="700" fill="#172033">IMDb prediction on newer movies</text>
+<text x="48" y="84" font-family="Arial, sans-serif" font-size="16" fill="#566074">Temporal holdout of 189 movies from 2015–2022 · lower is better</text>
+<text x="267" y="149" text-anchor="end" font-family="Arial, sans-serif" font-size="17" fill="#273246">Training mean</text>
+<rect x="285" y="122" width="535" height="34" rx="7" fill="#edf1f7"/>
+<rect x="285" y="122" width="493.7" height="34" rx="7" fill="#1f9d78"/>
+<text x="788.7" y="146" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#172033">0.7382</text>
+<text x="267" y="225" text-anchor="end" font-family="Arial, sans-serif" font-size="17" fill="#273246">TMDB + MovieLens average</text>
+<rect x="285" y="198" width="535" height="34" rx="7" fill="#edf1f7"/>
+<rect x="285" y="198" width="153.5" height="34" rx="7" fill="#1f9d78"/>
+<text x="448.5" y="222" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#172033">0.2296</text>
+<text x="267" y="301" text-anchor="end" font-family="Arial, sans-serif" font-size="17" fill="#273246">Ridge</text>
+<rect x="285" y="274" width="535" height="34" rx="7" fill="#edf1f7"/>
+<rect x="285" y="274" width="136.6" height="34" rx="7" fill="#1f9d78"/>
+<text x="431.6" y="298" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#172033">0.2043</text>
+</svg>

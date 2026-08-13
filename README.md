@@ -7,8 +7,27 @@ pipelines and interpretable prediction models.
 
 ## Status
 
-The reproducible data, reliability-analysis, and first interpretable-model
-workflows are implemented. Real-data model evaluation remains future work.
+The reproducible data, reliability-analysis, and interpretable-model workflows
+are implemented through the first real-data evaluation. The next decision is
+whether review text has sufficient coverage and independent signal to justify
+a sentiment extension.
+
+## Real-data result snapshot
+
+The first fixed snapshot contains 941 movies complete across TMDB, IMDb, and
+MovieLens. Lower MAE means closer agreement on the shared 1–10 scale.
+
+![Pairwise platform rating MAE](reports/figures/v1_pairwise_mae.svg)
+
+The Ridge model predicts IMDb ratings for 189 newer held-out movies. Its MAE is
+lower than both reference rules; the platform-average baseline is the more
+meaningful comparison.
+
+![Temporal holdout model MAE](reports/figures/v1_model_mae.svg)
+
+See [`docs/v1-results.md`](docs/v1-results.md) for the full metrics, uncertainty,
+grouped checks, and interpretation limits. The figures show aggregate results
+only; raw licensed data remain excluded from Git.
 
 ## Quick start
 
@@ -131,11 +150,12 @@ interpretation, and limitations.
 
 ## Current prediction model
 
-The first prediction workflow uses ridge linear regression and leave-one-out
-cross-validation. It compares held-out IMDb rating predictions with a
-training-mean baseline and reports MAE, RMSE, R-squared, coefficients, and every
-held-out prediction. See [`docs/modeling.md`](docs/modeling.md) for the feature
-definitions, validation design, and limitations.
+The credential-free demo uses leave-one-out cross-validation. The real-data
+workflow uses an outer temporal holdout and selects Ridge regularization only
+inside the older training period. It compares held-out IMDb predictions with a
+training-mean baseline and a stronger TMDB–MovieLens average. See
+[`docs/modeling.md`](docs/modeling.md) for the feature definitions, validation
+design, and limitations.
 
 ## Planned data sources
 
