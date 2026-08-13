@@ -36,6 +36,18 @@ Correlation is not agreement. Two platforms can rank movies almost identically
 while one consistently rates every movie higher, so bias and MAE must be read
 alongside correlation.
 
+## V1 grouped and sensitivity analysis
+
+The real V1 extension reports only groups with at least 20 movies. It uses
+non-overlapping release decades, the first listed genre as primary genre, and
+the predeclared MovieLens rating-count bands. Sensitivity checks remove the top
+10% by TMDB popularity and separately raise all three support thresholds.
+
+Grouped comparisons are descriptive and retain their sample counts. They do
+not prove that decade or genre causes platform disagreement. Correlation
+measures association, bias and MAE measure agreement, and Ridge holdout metrics
+measure prediction; the three questions are reported separately.
+
 ## Current limitations
 
 - The demo sample is synthetic and too small for broad conclusions.
