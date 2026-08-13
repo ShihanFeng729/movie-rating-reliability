@@ -46,6 +46,10 @@ to generate real pairwise reliability and temporal Ridge holdout reports.
 Run `build_v1_source_manifest.py` after collection to create the local source
 URL, version, reference-time, size, and checksum audit manifest.
 
+Run `audit_real_v1.py` after the source manifest to quantify coverage,
+rejections, missingness, duplicates, ambiguous records, and to freeze the
+analysis-ready dataset metadata and checksums.
+
 Responses are cached for 24 hours by default. Add `--refresh` when a fresh
 snapshot must come directly from the API.
 
