@@ -152,6 +152,24 @@ class TmdbClientTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             client.movie_details(0)
 
+    def test_movie_reviews_uses_stable_id_and_page(self) -> None:
+        requested_urls = []
+
+        def opener(request: object, timeout: int) -> JsonResponse:
+            del timeout
+            requested_urls.append(request.full_url)
+            return JsonResponse(b'{"id": 42, "page": 2, "results": []}')
+
+        client = TmdbClient("token", self.cache_dir, opener=opener)
+        payload, _ = client.movie_reviews(42, page=2)
+
+        self.assertEqual(payload["id"], 42)
+        self.assertIn("/movie/42/reviews?language=en-US&page=2", requested_urls[0])
+        with self.assertRaises(ValueError):
+            client.movie_reviews(0)
+        with self.assertRaises(ValueError):
+            client.movie_reviews(42, page=0)
+
     def test_default_https_context_verifies_certificates(self) -> None:
         context = _default_ssl_context()
         self.assertEqual(context.verify_mode, 2)
