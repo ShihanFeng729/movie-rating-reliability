@@ -103,3 +103,7 @@ Raw source files, API responses, processed rows, and generated JSON reports are
 excluded from Git. The repository contains the sampling contract, download and
 collection workflows, transformation logic, analysis code, and automated tests
 needed to rebuild the results with appropriately licensed source access.
+
+Two aggregate SVG figures derived from these summaries are published in
+`reports/figures/` and displayed in the project README. They contain only the
+reported aggregate MAE values, not row-level source data.

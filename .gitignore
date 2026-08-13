@@ -42,6 +42,8 @@ data/cache/
 # Generated reports and runtime output
 reports/figures/*
 !reports/figures/.gitkeep
+!reports/figures/v1_pairwise_mae.svg
+!reports/figures/v1_model_mae.svg
 reports/generated/*
 !reports/generated/.gitkeep
 logs/

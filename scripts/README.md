@@ -51,6 +51,9 @@ Run `audit_real_v1.py` after the source manifest to quantify coverage,
 rejections, missingness, duplicates, ambiguous records, and to freeze the
 analysis-ready dataset metadata and checksums.
 
+Run `generate_v1_figures.py` after `analyze_real_v1.py` to rebuild the two
+published aggregate SVG result figures from the ignored local JSON summaries.
+
 Responses are cached for 24 hours by default. Add `--refresh` when a fresh
 snapshot must come directly from the API.
 
