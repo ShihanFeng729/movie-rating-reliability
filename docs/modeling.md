@@ -53,3 +53,19 @@ metrics only confirm that the pipeline works. They do not estimate accuracy on
 real or future movies. Real-data conclusions require a documented matched
 dataset, repeated error analysis, and checks for time, genre, and popularity
 effects.
+
+## Real-data V1 evaluation
+
+The real-data workflow uses a temporal holdout: the 752 older movies train the
+model and the newest 189 movies form an untouched test set. Inside the training
+period, a second temporal split selects Ridge alpha from 0.1, 1.0, and 10.0.
+Numeric scaling and genre categories are learned independently within each
+training partition, so neither validation nor outer-test rows define the
+preprocessing rules.
+
+The final comparison includes two reference points: the training-set mean and
+the simple average of TMDB and MovieLens ratings. The generated report also
+records coefficient ranges across candidate alpha values, holdout MAE by
+primary genre and rating-count band, and the ten largest absolute errors. These
+outputs help distinguish overall predictive accuracy from the parts of the
+sample where the baseline is less reliable.
