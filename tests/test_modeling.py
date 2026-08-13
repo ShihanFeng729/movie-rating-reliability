@@ -87,7 +87,12 @@ class ModelingTests(unittest.TestCase):
             self.assertEqual(result["train_movie_count"], 8)
             self.assertEqual(result["test_movie_count"], 2)
             self.assertEqual(result["test_year_min"], 2008)
-            self.assertIn("training rows only", result["preprocessing"])
+            self.assertIn("never define preprocessing", result["preprocessing"])
+            self.assertIn("tmdb_movielens_average", result["baselines"])
+            self.assertEqual(len(result["largest_absolute_errors"]), 2)
+            self.assertIn("coefficient_stability_across_alphas", result)
+            self.assertFalse(result["alpha_selection"]["outer_test_used_for_selection"])
+            self.assertIn(result["ridge_alpha"], [0.1, 1.0, 10.0])
 
 
 if __name__ == "__main__":

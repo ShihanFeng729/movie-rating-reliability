@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import math
 from pathlib import Path
 from statistics import fmean
-from typing import Sequence
+from typing import Callable, Sequence
 
 
 RATING_MINIMUM = 1.0
@@ -112,7 +112,7 @@ def _primary_genre(value: str) -> str:
 
 def evaluate_temporal_holdout(
     path: Path, *, test_fraction: float = 0.2, minimum_test_movies: int = 100,
-    alpha: float = 1.0,
+    alpha: float | None = None,
 ) -> dict[str, object]:
     """Evaluate Ridge on the newest movies, with preprocessing fixed by the file."""
 
@@ -139,10 +139,165 @@ def evaluate_temporal_holdout(
     )
     train_rows = ordered[:-test_size]
     test_rows = ordered[-test_size:]
-    train_genres = sorted({_primary_genre(row["genres"]) for row in train_rows})
+    alpha_candidates = (0.1, 1.0, 10.0)
+    validation_size = min(
+        max(2, math.ceil(len(train_rows) * 0.2)),
+        len(train_rows) - 2,
+    )
+    inner_train_rows = train_rows[:-validation_size]
+    validation_rows = train_rows[-validation_size:]
+    inner_transform, _, _ = _fit_real_transformer(inner_train_rows)
+    inner_train_features = [inner_transform(row) for row in inner_train_rows]
+    validation_features = [inner_transform(row) for row in validation_rows]
+    inner_train_targets = [float(row["imdb_rating_10"]) for row in inner_train_rows]
+    validation_targets = [float(row["imdb_rating_10"]) for row in validation_rows]
+    alpha_validation = []
+    for candidate_alpha in alpha_candidates:
+        inner_coefficients = fit_ridge(
+            inner_train_features, inner_train_targets, alpha=candidate_alpha
+        )
+        validation_predictions = [
+            predict(inner_coefficients, features) for features in validation_features
+        ]
+        alpha_validation.append({
+            "alpha": candidate_alpha,
+            "validation_mae": round(
+                regression_metrics(validation_targets, validation_predictions)["mae"], 4
+            ),
+        })
+    selected_alpha = alpha if alpha is not None else min(
+        alpha_validation, key=lambda item: (item["validation_mae"], item["alpha"])
+    )["alpha"]
+    transform, reference_genre, encoded_genres = _fit_real_transformer(train_rows)
+    train_features = [transform(row) for row in train_rows]
+    test_features = [transform(row) for row in test_rows]
+    train_targets = [float(row["imdb_rating_10"]) for row in train_rows]
+    actual = [float(row["imdb_rating_10"]) for row in test_rows]
+    coefficients = fit_ridge(
+        train_features, train_targets, alpha=float(selected_alpha),
+    )
+    train_mean = fmean(train_targets)
+    predictions = [predict(coefficients, features) for features in test_features]
+    mean_baseline = [train_mean] * len(test_rows)
+    platform_average_baseline = [
+        (float(row["tmdb_rating_10"]) + float(row["movielens_rating_10"])) / 2
+        for row in test_rows
+    ]
+    model_metrics = regression_metrics(actual, predictions)
+    mean_baseline_metrics = regression_metrics(actual, mean_baseline)
+    platform_baseline_metrics = regression_metrics(actual, platform_average_baseline)
+    feature_names = [
+        "tmdb_rating_10_standardized", "movielens_rating_10_standardized",
+        "log10_tmdb_vote_count_standardized",
+        "log10_movielens_rating_count_standardized",
+        "release_decades_since_2000_standardized",
+        *(f"genre_{genre}" for genre in encoded_genres),
+    ]
+    coefficient_names = ["intercept", *feature_names]
+    coefficient_sets = {
+        str(candidate_alpha): dict(zip(
+            coefficient_names,
+            fit_ridge(train_features, train_targets, alpha=candidate_alpha),
+        ))
+        for candidate_alpha in alpha_candidates
+    }
+    coefficient_stability = {
+        name: {
+            "minimum": round(min(values), 4),
+            "maximum": round(max(values), 4),
+            "same_sign_across_alphas": min(values) * max(values) >= 0,
+        }
+        for name in coefficient_names
+        for values in [[coefficient_sets[key][name] for key in coefficient_sets]]
+    }
+    prediction_rows = [
+        {
+            "movielens_id": row["movielens_id"],
+            "title": row.get("title", ""),
+            "release_year": int(row["release_year"]),
+            "primary_genre": _primary_genre(row["genres"]),
+            "movielens_rating_count_band": row.get("movielens_rating_count_band", ""),
+            "actual": truth,
+            "prediction": round(estimate, 4),
+            "absolute_error": round(abs(truth - estimate), 4),
+        }
+        for row, truth, estimate in zip(test_rows, actual, predictions)
+    ]
+    grouped_errors = {}
+    for dimension in ("primary_genre", "movielens_rating_count_band"):
+        groups = sorted({str(row[dimension]) for row in prediction_rows})
+        grouped_errors[dimension] = [
+            {
+                "group": group,
+                "movie_count": len(group_rows),
+                "mae": round(fmean(float(row["absolute_error"]) for row in group_rows), 4),
+            }
+            for group in groups
+            for group_rows in [[row for row in prediction_rows if row[dimension] == group]]
+            if len(group_rows) >= 5
+        ]
+    largest_errors = sorted(
+        prediction_rows, key=lambda row: (-float(row["absolute_error"]), str(row["movielens_id"]))
+    )[:10]
+    return {
+        "dataset": "real_v1_movie_ratings",
+        "target": "imdb_rating_10",
+        "evaluation_protocol": "newest_release_years_holdout",
+        "train_movie_count": len(train_rows),
+        "test_movie_count": len(test_rows),
+        "test_year_min": min(int(row["release_year"]) for row in test_rows),
+        "test_year_max": max(int(row["release_year"]) for row in test_rows),
+        "ridge_alpha": selected_alpha,
+        "alpha_selection": {
+            "method": "newest_20_percent_of_training_rows_validation",
+            "inner_training_movie_count": len(inner_train_targets),
+            "validation_movie_count": len(validation_targets),
+            "candidate_results": alpha_validation,
+            "selected_alpha": selected_alpha,
+            "outer_test_used_for_selection": False,
+        },
+        "preprocessing": (
+            "Numeric standardization and genre categories learned separately from each "
+            "training partition; validation and outer-test rows never define preprocessing."
+        ),
+        "reference_genre": reference_genre,
+        "model_metrics": _rounded_metrics(model_metrics),
+        "baselines": {
+            "training_mean": _rounded_metrics(mean_baseline_metrics),
+            "tmdb_movielens_average": _rounded_metrics(platform_baseline_metrics),
+        },
+        "mae_improvement_over_training_mean": round(
+            mean_baseline_metrics["mae"] - model_metrics["mae"], 4
+        ),
+        "mae_improvement_over_platform_average": round(
+            platform_baseline_metrics["mae"] - model_metrics["mae"], 4
+        ),
+        "coefficients_at_selected_alpha": {
+            name: round(value, 4) for name, value in zip(coefficient_names, coefficients)
+        },
+        "coefficient_stability_across_alphas": coefficient_stability,
+        "grouped_holdout_errors": grouped_errors,
+        "largest_absolute_errors": largest_errors,
+        "error_analysis_note": (
+            "Large residuals identify information absent from this baseline, such as "
+            "review text, audience composition, regional release context, and rating drift."
+        ),
+        "interpretation_note": (
+            "The newest movies were held out before fitting. Ridge alpha was selected "
+            "inside the older training portion without using outer-test outcomes."
+        ),
+    }
+
+
+def _fit_real_transformer(
+    training_rows: list[dict[str, str]],
+) -> tuple[Callable[[dict[str, str]], list[float]], str, list[str]]:
+    """Fit numeric scaling and genre encoding on one training partition only."""
+
+    train_genres = sorted({_primary_genre(row["genres"]) for row in training_rows})
     reference_genre = train_genres[0]
     encoded_genres = train_genres[1:]
-    train_numeric = [_real_numeric_features(row) for row in train_rows]
+    train_numeric = [_real_numeric_features(row) for row in training_rows]
     means = [fmean(column) for column in zip(*train_numeric)]
     scales = [
         math.sqrt(fmean((value - mean) ** 2 for value in column)) or 1.0
@@ -157,41 +312,7 @@ def evaluate_temporal_holdout(
             *(1.0 if genre == candidate else 0.0 for candidate in encoded_genres),
         ]
 
-    train_features = [transform(row) for row in train_rows]
-    test_features = [transform(row) for row in test_rows]
-    train_targets = [float(row["imdb_rating_10"]) for row in train_rows]
-    actual = [float(row["imdb_rating_10"]) for row in test_rows]
-    coefficients = fit_ridge(
-        train_features, train_targets, alpha=alpha,
-    )
-    train_mean = fmean(train_targets)
-    predictions = [predict(coefficients, features) for features in test_features]
-    baseline = [train_mean] * len(test_rows)
-    model_metrics = regression_metrics(actual, predictions)
-    baseline_metrics = regression_metrics(actual, baseline)
-    return {
-        "dataset": "real_v1_movie_ratings",
-        "target": "imdb_rating_10",
-        "evaluation_protocol": "newest_release_years_holdout",
-        "train_movie_count": len(train_rows),
-        "test_movie_count": len(test_rows),
-        "test_year_min": min(int(row["release_year"]) for row in test_rows),
-        "test_year_max": max(int(row["release_year"]) for row in test_rows),
-        "ridge_alpha": alpha,
-        "preprocessing": (
-            "Numeric standardization and genre categories learned from training rows only."
-        ),
-        "reference_genre": reference_genre,
-        "model_metrics": _rounded_metrics(model_metrics),
-        "baseline_metrics": _rounded_metrics(baseline_metrics),
-        "mae_improvement_over_baseline": round(
-            baseline_metrics["mae"] - model_metrics["mae"], 4
-        ),
-        "interpretation_note": (
-            "The newest movies were held out before fitting. This baseline uses a fixed "
-            "alpha; later tuning must occur only inside the training portion."
-        ),
-    }
+    return transform, reference_genre, encoded_genres
 
 
 def _real_numeric_features(row: dict[str, str]) -> list[float]:

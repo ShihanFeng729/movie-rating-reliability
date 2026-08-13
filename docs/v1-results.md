@@ -75,11 +75,27 @@ set and the newest 189 movies, released from 2015 through 2022, form the fixed
 holdout. Numeric standardization and genre encoding are learned from training
 rows only.
 
-The report compares Ridge with the mean IMDb rating of the training data.
-Ridge achieved MAE 0.2035, RMSE 0.2851, and R² 0.9047. The training-mean
-baseline achieved MAE 0.7382, RMSE 0.9289, and R² -0.0118. The fixed Ridge
-alpha validates the planned baseline; any later parameter tuning must occur
-only within the training portion.
+Ridge alpha is selected from 0.1, 1.0, and 10.0 using the newest 20% of the
+older training portion as an internal validation set. Each partition learns its
+own preprocessing, and the outer holdout is not consulted during selection.
+The selected alpha is 10.0.
+
+Ridge achieved MAE 0.2043, RMSE 0.2862, and R² 0.9040. The training-mean
+baseline achieved MAE 0.7382, while a stronger baseline—the simple average of
+TMDB and MovieLens ratings—achieved MAE 0.2296. Ridge therefore improves MAE
+by 0.0253 over the platform-average baseline.
+
+The signs of all fitted coefficients remain stable across the three candidate
+alpha values. On the holdout, MAE is 0.1899 for movies with 200–999 MovieLens
+ratings, 0.2077 for 1,000+, and 0.2116 for 50–199. Genre groups with at least
+five holdout movies range from 0.1304 MAE for Crime to 0.2627 for Action; these
+small descriptive groups should not be read as population-level rankings.
+
+The largest individual errors include *Ghostbusters* (2016), *After We
+Collided* (2020), and *F9* (2021). These cases point to information absent from
+the baseline—such as audience composition, regional or language context,
+franchise effects, review text, and platform rating drift—but do not establish
+which missing factor caused any one residual.
 
 ## Reproduction boundary
 
