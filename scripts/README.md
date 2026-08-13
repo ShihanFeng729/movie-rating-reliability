@@ -69,6 +69,12 @@ python3 scripts/audit_tmdb_review_coverage.py --limit 30
 Raw review responses remain local. The generated summary records coverage,
 counts, languages, timestamps, and failures without reproducing review text.
 
+Run `audit_review_language_timing.py` after the coverage audit. It applies a
+conservative, explainable local language screen and compares review creation
+times with the IMDb and MovieLens snapshot boundaries. A pinned, seeded
+`langdetect` check independently validates the language result. The generated
+summary contains labels and counts, never review bodies.
+
 ## `generate_demo_data.py`
 
 Creates the small tracked dataset used when no downloads or API credentials are

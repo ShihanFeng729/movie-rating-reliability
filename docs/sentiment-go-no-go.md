@@ -2,7 +2,7 @@
 
 ## Decision status
 
-**Conditional Go for a coverage audit; No-Go for model implementation yet.**
+**Go to a small V1.1 sentiment baseline, with strict timing filters.**
 
 The rating baseline is now evaluated on an untouched temporal holdout. This
 creates a defensible residual target for asking whether review language adds
@@ -86,10 +86,21 @@ review, for 79.89% coverage. This passes the predeclared minimum of both 60%
 and 100 covered movies.
 
 The API response provides review creation and update timestamps, but no
-dependable language field. The decision therefore remains conditional: local
-language identification must be validated, and review timestamps must be
-compared with the rating snapshot boundaries before sentiment features are
-implemented.
+dependable language field. A conservative transparent screen classifies all
+151 covered movies as likely English. An independent, seeded `langdetect`
+check also finds English as the majority review language for all 151 movies;
+504 of 507 individual reviews are classified as English.
+
+All 507 reviews were created on or before the 2026 IMDb rating snapshot. Under
+the stricter MovieLens 32M boundary of 2023-10-13, 444 reviews remain and 149
+of the 189 holdout movies still have text, for 78.84% strict coverage. This
+continues to exceed both predeclared coverage thresholds.
+
+The final Stage 5 decision is therefore **Go**. V1.1 must use only reviews
+created on or before 2023-10-13 in its primary comparison. A broader analysis
+using all pre-IMDb-snapshot reviews may be reported only as a sensitivity
+check. This decision authorizes a small sentiment baseline, not an unrestricted
+model search.
 
 ## Interpretation boundary
 
