@@ -41,7 +41,8 @@ movie, record only audit metadata in generated summaries:
 - stable TMDB ID;
 - number of reviews returned;
 - number of non-empty reviews;
-- language reported for each review;
+- language inferred locally in a later, separately validated step (the TMDB
+  response does not provide a dependable review-language field);
 - collection timestamp and endpoint parameters; and
 - error or unavailable status.
 
@@ -56,8 +57,9 @@ Proceed to a small V1.1 sentiment baseline only if all of the following hold:
 1. at least 60% of the 189 holdout movies have one or more non-empty reviews;
 2. at least 100 holdout movies are text-covered, so the comparison is not based
    on a very small subset;
-3. a single language covers at least 80% of text-covered movies, or a clearly
-   documented multilingual method is chosen before modeling;
+3. locally validated language identification shows that a single language
+   covers at least 80% of text-covered movies, or a documented multilingual
+   method is chosen before modeling;
 4. review collection and local retention are compatible with the source terms
    and attribution requirements; and
 5. review timing can be recorded well enough to discuss possible leakage from
@@ -75,6 +77,19 @@ if it reduces MAE on the same eligible held-out movies by at least 0.01 and the
 direction of improvement is also present in at least three of four chronological
 holdout subgroups. Coverage-matched Ridge metrics must be reported so that
 missing reviews cannot create an unfair comparison.
+
+## First coverage result
+
+The fixed 189-movie outer holdout was audited successfully with zero request
+failures. Of those movies, 151 have at least one non-empty first-page TMDB
+review, for 79.89% coverage. This passes the predeclared minimum of both 60%
+and 100 covered movies.
+
+The API response provides review creation and update timestamps, but no
+dependable language field. The decision therefore remains conditional: local
+language identification must be validated, and review timestamps must be
+compared with the rating snapshot boundaries before sentiment features are
+implemented.
 
 ## Interpretation boundary
 

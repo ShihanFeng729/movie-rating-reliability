@@ -115,6 +115,26 @@ class TmdbClient:
             refresh=refresh,
         )
 
+    def movie_reviews(
+        self,
+        tmdb_id: int,
+        *,
+        page: int = 1,
+        language: str = "en-US",
+        refresh: bool = False,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Fetch one page of user reviews for a stable TMDB movie ID."""
+
+        if tmdb_id <= 0:
+            raise ValueError("TMDB movie ID must be positive.")
+        if page < 1:
+            raise ValueError("TMDB review page must be positive.")
+        return self.get(
+            f"/movie/{tmdb_id}/reviews",
+            {"language": language, "page": page},
+            refresh=refresh,
+        )
+
     def get(
         self,
         endpoint: str,

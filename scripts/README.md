@@ -57,6 +57,18 @@ published aggregate SVG result figures from the ignored local JSON summaries.
 Responses are cached for 24 hours by default. Add `--refresh` when a fresh
 snapshot must come directly from the API.
 
+## `audit_tmdb_review_coverage.py`
+
+Audits first-page TMDB review coverage for the same 189 newer movies used by
+the Ridge outer holdout. Start with a 30-movie smoke test:
+
+```bash
+python3 scripts/audit_tmdb_review_coverage.py --limit 30
+```
+
+Raw review responses remain local. The generated summary records coverage,
+counts, languages, timestamps, and failures without reproducing review text.
+
 ## `generate_demo_data.py`
 
 Creates the small tracked dataset used when no downloads or API credentials are
