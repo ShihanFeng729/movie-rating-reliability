@@ -41,7 +41,8 @@ python3 scripts/collect_candidate_tmdb.py
 
 The command reads `TMDB_BEARER_TOKEN` from the shell or the ignored local
 `.env` file. Run `analyze_real_v1.py` after the complete dataset is collected
-to generate real pairwise reliability and temporal Ridge holdout reports.
+to generate real pairwise reliability, grouped and sensitivity analyses, and
+the temporal Ridge holdout report.
 
 Run `build_v1_source_manifest.py` after collection to create the local source
 URL, version, reference-time, size, and checksum audit manifest.

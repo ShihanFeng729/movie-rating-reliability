@@ -12,6 +12,9 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from movie_rating_reliability.evaluation import evaluate_rating_csv  # noqa: E402
 from movie_rating_reliability.modeling import evaluate_temporal_holdout  # noqa: E402
+from movie_rating_reliability.reliability_analysis import (  # noqa: E402
+    analyze_reliability_segments,
+)
 
 
 def main() -> None:
@@ -21,9 +24,11 @@ def main() -> None:
     report_dir = PROJECT_ROOT / "reports" / "generated"
     report_dir.mkdir(parents=True, exist_ok=True)
     reliability = evaluate_rating_csv(data_path)
+    extended_reliability = analyze_reliability_segments(data_path)
     prediction = evaluate_temporal_holdout(data_path)
     for name, report in (
         ("v1_reliability_summary.json", reliability),
+        ("v1_reliability_segments.json", extended_reliability),
         ("v1_prediction_summary.json", prediction),
     ):
         (report_dir / name).write_text(
