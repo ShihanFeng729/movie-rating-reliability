@@ -29,6 +29,9 @@ See [`docs/v1-results.md`](docs/v1-results.md) for the full metrics, uncertainty
 grouped checks, and interpretation limits. The figures show aggregate results
 only; raw licensed data remain excluded from Git.
 
+The criterion-by-criterion V1 completion evidence is recorded in
+[`docs/v1-acceptance.md`](docs/v1-acceptance.md).
+
 ## Quick start
 
 Run the complete credential-free demo from the repository root:

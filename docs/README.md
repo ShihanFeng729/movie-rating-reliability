@@ -10,3 +10,6 @@ This directory will contain durable project documentation, including:
 Current V1 documentation includes the real snapshot, data-quality audit,
 reliability and model results, and the conditional sentiment-module decision
 gate in [`sentiment-go-no-go.md`](sentiment-go-no-go.md).
+
+The completed version is closed by the criterion-by-criterion evidence record
+in [`v1-acceptance.md`](v1-acceptance.md).
