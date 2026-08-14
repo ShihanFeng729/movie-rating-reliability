@@ -75,6 +75,12 @@ times with the IMDb and MovieLens snapshot boundaries. A pinned, seeded
 `langdetect` check independently validates the language result. The generated
 summary contains labels and counts, never review bodies.
 
+Run `build_v1_1_strict_review_sample.py` to freeze the first V1.1 input before
+calculating sentiment. It keeps only individually detected English reviews on
+or before the strict MovieLens boundary, aggregates them by stable TMDB ID,
+and writes a deterministic local-only JSONL file plus an aggregate freeze
+summary. See `docs/v1-1-strict-text-sample.md` for the exact rules.
+
 ## `generate_demo_data.py`
 
 Creates the small tracked dataset used when no downloads or API credentials are
