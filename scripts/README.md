@@ -81,6 +81,11 @@ or before the strict MovieLens boundary, aggregates them by stable TMDB ID,
 and writes a deterministic local-only JSONL file plus an aggregate freeze
 summary. See `docs/v1-1-strict-text-sample.md` for the exact rules.
 
+Run `build_v1_1_sentiment_features.py` after the strict sample is frozen. It
+applies the fixed, interpretable lexicon and local-negation rule documented in
+`docs/v1-1-sentiment-baseline.md`. Numeric features remain local and contain no
+review text or author fields.
+
 ## `generate_demo_data.py`
 
 Creates the small tracked dataset used when no downloads or API credentials are

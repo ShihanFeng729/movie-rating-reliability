@@ -9,7 +9,8 @@ pipelines and interpretable prediction models.
 
 The reproducible data, reliability-analysis, and interpretable-model workflows
 are complete through V1. V1.1 has begun with a frozen, time-filtered English
-review sample; sentiment scoring and modeling remain separate later steps.
+review sample and a fixed, interpretable sentiment feature. Prediction-model
+comparison remains a separate later step.
 
 ## Real-data result snapshot
 
@@ -32,6 +33,8 @@ The criterion-by-criterion V1 completion evidence is recorded in
 [`docs/v1-acceptance.md`](docs/v1-acceptance.md).
 The first V1.1 sample-freeze rules and aggregate counts are recorded in
 [`docs/v1-1-strict-text-sample.md`](docs/v1-1-strict-text-sample.md).
+The predefined scoring rule is documented in
+[`docs/v1-1-sentiment-baseline.md`](docs/v1-1-sentiment-baseline.md).
 
 ## Quick start
 
