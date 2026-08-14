@@ -13,3 +13,6 @@ gate in [`sentiment-go-no-go.md`](sentiment-go-no-go.md).
 
 The completed version is closed by the criterion-by-criterion evidence record
 in [`v1-acceptance.md`](v1-acceptance.md).
+
+V1.1 starts with the reproducible, local-only review selection documented in
+[`v1-1-strict-text-sample.md`](v1-1-strict-text-sample.md).

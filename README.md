@@ -8,9 +8,8 @@ pipelines and interpretable prediction models.
 ## Status
 
 The reproducible data, reliability-analysis, and interpretable-model workflows
-are implemented through the first real-data evaluation. The next decision is
-whether review text has sufficient coverage and independent signal to justify
-a sentiment extension.
+are complete through V1. V1.1 has begun with a frozen, time-filtered English
+review sample; sentiment scoring and modeling remain separate later steps.
 
 ## Real-data result snapshot
 
@@ -31,6 +30,8 @@ only; raw licensed data remain excluded from Git.
 
 The criterion-by-criterion V1 completion evidence is recorded in
 [`docs/v1-acceptance.md`](docs/v1-acceptance.md).
+The first V1.1 sample-freeze rules and aggregate counts are recorded in
+[`docs/v1-1-strict-text-sample.md`](docs/v1-1-strict-text-sample.md).
 
 ## Quick start
 
