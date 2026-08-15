@@ -18,3 +18,5 @@ V1.1 starts with the reproducible, local-only review selection documented in
 [`v1-1-strict-text-sample.md`](v1-1-strict-text-sample.md).
 Its fixed, interpretable text-scoring rule is documented separately in
 [`v1-1-sentiment-baseline.md`](v1-1-sentiment-baseline.md).
+The same-sample no-sentiment model comparison is specified in
+[`v1-1-coverage-matched-ridge.md`](v1-1-coverage-matched-ridge.md).
