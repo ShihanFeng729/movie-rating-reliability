@@ -64,7 +64,7 @@ python3 scripts/report_v1_1_sentiment_comparison.py
 The command rebuilds both models and writes the ignored aggregate-plus-local
 diagnostic report to `reports/generated/v1_1_model_comparison.json`.
 
-This page intentionally does not declare the V1.1 success decision. The next
-stage applies the already fixed thresholds—overall MAE improvement of at least
-`0.01` and improvement in at least three of four time groups—without modifying
-the sample, features, model, or grouping.
+The separately recorded decision applies the already fixed thresholds—overall
+MAE improvement of at least `0.01` and improvement in at least three of four
+time groups—without modifying the sample, features, model, or grouping. See
+[`v1-1-decision.md`](v1-1-decision.md).
