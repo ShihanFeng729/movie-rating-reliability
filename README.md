@@ -35,6 +35,8 @@ The first V1.1 sample-freeze rules and aggregate counts are recorded in
 [`docs/v1-1-strict-text-sample.md`](docs/v1-1-strict-text-sample.md).
 The predefined scoring rule is documented in
 [`docs/v1-1-sentiment-baseline.md`](docs/v1-1-sentiment-baseline.md).
+The fair no-sentiment comparison for the same covered movies is documented in
+[`docs/v1-1-coverage-matched-ridge.md`](docs/v1-1-coverage-matched-ridge.md).
 
 ## Quick start
 

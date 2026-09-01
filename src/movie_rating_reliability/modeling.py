@@ -113,6 +113,7 @@ def _primary_genre(value: str) -> str:
 def evaluate_temporal_holdout(
     path: Path, *, test_fraction: float = 0.2, minimum_test_movies: int = 100,
     alpha: float | None = None,
+    outer_test_movie_ids: set[str] | None = None,
 ) -> dict[str, object]:
     """Evaluate Ridge on the newest movies, with preprocessing fixed by the file."""
 
@@ -138,7 +139,24 @@ def evaluate_temporal_holdout(
         ),
     )
     train_rows = ordered[:-test_size]
-    test_rows = ordered[-test_size:]
+    full_test_rows = ordered[-test_size:]
+    test_rows = full_test_rows
+    if outer_test_movie_ids is not None:
+        if not outer_test_movie_ids:
+            raise ValueError("Outer-test movie ID filter cannot be empty.")
+        available_ids = {row["movielens_id"] for row in full_test_rows}
+        missing_ids = sorted(outer_test_movie_ids.difference(available_ids))
+        if missing_ids:
+            raise ValueError(
+                "Outer-test movie IDs are outside the fixed temporal holdout: "
+                f"{missing_ids[:5]}"
+            )
+        test_rows = [
+            row for row in full_test_rows
+            if row["movielens_id"] in outer_test_movie_ids
+        ]
+        if len(test_rows) < 2:
+            raise ValueError("Filtered outer test requires at least two movies.")
     alpha_candidates = (0.1, 1.0, 10.0)
     validation_size = min(
         max(2, math.ceil(len(train_rows) * 0.2)),
@@ -245,6 +263,8 @@ def evaluate_temporal_holdout(
         "evaluation_protocol": "newest_release_years_holdout",
         "train_movie_count": len(train_rows),
         "test_movie_count": len(test_rows),
+        "full_outer_test_movie_count": len(full_test_rows),
+        "outer_test_coverage_filter_applied": outer_test_movie_ids is not None,
         "test_year_min": min(int(row["release_year"]) for row in test_rows),
         "test_year_max": max(int(row["release_year"]) for row in test_rows),
         "ridge_alpha": selected_alpha,
