@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import json
 import math
@@ -36,6 +37,26 @@ def temporal_holdout_rows(
     return ordered[-test_size:]
 
 
+def temporal_training_rows(
+    data_path: Path, *, test_fraction: float = 0.2, minimum_test_movies: int = 100
+) -> list[dict[str, str]]:
+    """Return the older training rows preceding the fixed temporal holdout."""
+
+    with data_path.open(encoding="utf-8", newline="") as file:
+        rows = list(csv.DictReader(file))
+    required = {"tmdb_id", "release_year", "movielens_id"}
+    if not rows or not required.issubset(rows[0]):
+        raise ValueError("Real V1 dataset is empty or missing holdout columns.")
+    test_size = max(minimum_test_movies, math.ceil(len(rows) * test_fraction))
+    if test_size >= len(rows):
+        raise ValueError("Temporal holdout leaves no training movies.")
+    ordered = sorted(
+        rows,
+        key=lambda row: (int(row["release_year"]), row["movielens_id"]),
+    )
+    return ordered[:-test_size]
+
+
 def audit_review_coverage(
     client: ReviewClient,
     data_path: Path,
@@ -49,14 +70,36 @@ def audit_review_coverage(
 ) -> dict[str, Any]:
     """Collect first-page review metadata and summarize text coverage."""
 
-    holdout = temporal_holdout_rows(
-        data_path, minimum_test_movies=minimum_test_movies
+    holdout = temporal_holdout_rows(data_path, minimum_test_movies=minimum_test_movies)
+    return collect_review_coverage(
+        client, holdout, raw_dir, summary_path,
+        stage="tmdb_review_coverage_audit",
+        population_name="fixed_holdout",
+        language=language, refresh=refresh, limit=limit,
     )
-    selected = holdout[:limit] if limit is not None else holdout
+
+
+def collect_review_coverage(
+    client: ReviewClient,
+    population_rows: list[dict[str, str]],
+    raw_dir: Path,
+    summary_path: Path,
+    *,
+    stage: str,
+    population_name: str,
+    language: str = "en-US",
+    refresh: bool = False,
+    limit: int | None = None,
+    workers: int = 1,
+) -> dict[str, Any]:
+    """Collect resumable first-page reviews for an explicit movie population."""
+
+    selected = population_rows[:limit] if limit is not None else population_rows
     raw_dir.mkdir(parents=True, exist_ok=True)
-    movie_audits: list[dict[str, Any]] = []
-    failures: list[dict[str, Any]] = []
-    for row in selected:
+    if workers < 1:
+        raise ValueError("workers must be at least 1")
+
+    def collect_one(row: dict[str, str]) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
         tmdb_id = int(row["tmdb_id"])
         item_path = raw_dir / f"{tmdb_id}.json"
         try:
@@ -71,13 +114,18 @@ def audit_review_coverage(
                     json.dumps(record, ensure_ascii=False, indent=2) + "\n",
                     encoding="utf-8",
                 )
-            movie_audits.append(_summarize_movie(tmdb_id, record))
+            return _summarize_movie(tmdb_id, record), None
         except Exception as error:
-            failures.append({
+            return None, {
                 "tmdb_id": tmdb_id,
                 "error_type": type(error).__name__,
                 "message": str(error),
-            })
+            }
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        collected = list(executor.map(collect_one, selected))
+    movie_audits = [audit for audit, _ in collected if audit is not None]
+    failures = [failure for _, failure in collected if failure is not None]
     covered = [item for item in movie_audits if item["nonempty_review_count"] > 0]
     language_movie_counts: dict[str, int] = {}
     for item in covered:
@@ -85,10 +133,15 @@ def audit_review_coverage(
             language_movie_counts[code] = language_movie_counts.get(code, 0) + 1
     audited_count = len(movie_audits)
     summary = {
-        "stage": "tmdb_review_coverage_audit",
+        "stage": stage,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "requested_language": language,
-        "fixed_holdout_movie_count": len(holdout),
+        "population_name": population_name,
+        "population_movie_count": len(population_rows),
+        **(
+            {"fixed_holdout_movie_count": len(population_rows)}
+            if population_name == "fixed_holdout" else {}
+        ),
         "selected_movie_count": len(selected),
         "audited_movie_count": audited_count,
         "failed_movie_count": len(failures),

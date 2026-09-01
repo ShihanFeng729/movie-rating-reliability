@@ -91,6 +91,14 @@ comparison on the 149 strict-coverage outer-test movies. It preserves the
 original 752-movie training set, temporal alpha selection, preprocessing, and
 metrics. See `docs/v1-1-coverage-matched-ridge.md` for the comparison contract.
 
+Run `collect_v1_1_training_reviews.py` to resumably collect first-page reviews
+for the fixed 752 older training movies. Then run
+`build_v1_1_training_sentiment_features.py` to apply the same strict cutoff,
+language filter, and sentiment rule used by the outer test. Finally,
+`analyze_v1_1_sentiment_ridge.py` fits the leakage-controlled sentiment
+extension. See `docs/v1-1-sentiment-ridge.md` for missing-value and validation
+rules.
+
 ## `generate_demo_data.py`
 
 Creates the small tracked dataset used when no downloads or API credentials are

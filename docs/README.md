@@ -20,3 +20,5 @@ Its fixed, interpretable text-scoring rule is documented separately in
 [`v1-1-sentiment-baseline.md`](v1-1-sentiment-baseline.md).
 The same-sample no-sentiment model comparison is specified in
 [`v1-1-coverage-matched-ridge.md`](v1-1-coverage-matched-ridge.md).
+The leakage-controlled sentiment extension is documented in
+[`v1-1-sentiment-ridge.md`](v1-1-sentiment-ridge.md).

@@ -91,6 +91,23 @@ class SentimentBaselineTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Duplicate TMDB ID"):
                 build_sentiment_features(sample, root / "out.csv", root / "out.json")
 
+    def test_unicode_line_separator_inside_text_does_not_split_jsonl(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            sample = root / "sample.jsonl"
+            row = {
+                "movielens_id": "1", "imdb_id": "tt1", "tmdb_id": 10,
+                "release_year": 2020, "review_count": 1,
+                "aggregated_review_text": "Good film.\u2028Still enjoyable.",
+            }
+            sample.write_text(
+                json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8"
+            )
+            summary = build_sentiment_features(
+                sample, root / "out.csv", root / "out.json"
+            )
+            self.assertEqual(summary["movie_count"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -83,25 +83,24 @@ def build_sentiment_features(
 
     rows: list[dict[str, Any]] = []
     seen_tmdb_ids: set[int] = set()
-    for line_number, line in enumerate(
-        sample_path.read_text(encoding="utf-8").splitlines(), start=1
-    ):
-        if not line.strip():
-            continue
-        source = json.loads(line)
-        tmdb_id = int(source["tmdb_id"])
-        if tmdb_id in seen_tmdb_ids:
-            raise ValueError(f"Duplicate TMDB ID {tmdb_id} at line {line_number}")
-        seen_tmdb_ids.add(tmdb_id)
-        scores = score_text(str(source["aggregated_review_text"]))
-        rows.append({
-            "movielens_id": source["movielens_id"],
-            "imdb_id": source["imdb_id"],
-            "tmdb_id": tmdb_id,
-            "release_year": int(source["release_year"]),
-            "review_count": int(source["review_count"]),
-            **scores,
-        })
+    with sample_path.open(encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                continue
+            source = json.loads(line)
+            tmdb_id = int(source["tmdb_id"])
+            if tmdb_id in seen_tmdb_ids:
+                raise ValueError(f"Duplicate TMDB ID {tmdb_id} at line {line_number}")
+            seen_tmdb_ids.add(tmdb_id)
+            scores = score_text(str(source["aggregated_review_text"]))
+            rows.append({
+                "movielens_id": source["movielens_id"],
+                "imdb_id": source["imdb_id"],
+                "tmdb_id": tmdb_id,
+                "release_year": int(source["release_year"]),
+                "review_count": int(source["review_count"]),
+                **scores,
+            })
     if not rows:
         raise ValueError(f"No sample rows found in {sample_path}")
     rows.sort(key=lambda row: row["tmdb_id"])
