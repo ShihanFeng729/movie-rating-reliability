@@ -51,10 +51,11 @@ sentiment-augmented Ridge has MAE `0.2029`, RMSE `0.2881`, and R² `0.9015`.
 The standardized sentiment-score coefficient is `0.0226`; the availability
 indicator coefficient is `-0.0006`.
 
-These are implementation-stage observations, not the final V1.1 decision. The
-next reporting step must compare the model with the frozen no-sentiment MAE of
-`0.2040`, calculate the predefined time subgroups, and apply the already fixed
-success criteria without changing this model.
+The completed comparison found an MAE improvement of only `0.0011` and
+improvement in two of four time groups. Both predefined continuation criteria
+failed, so this model is retained for reproducibility but is not the preferred
+model. See [`v1-1-decision.md`](v1-1-decision.md) and
+[`v1-1-closure.md`](v1-1-closure.md).
 
 The frozen training strict-text SHA-256 is
 `8d8896495184e81842094c7576f77ba8d2867133934fa3b25c15ec86c52d8f32`;

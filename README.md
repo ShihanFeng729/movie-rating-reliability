@@ -8,10 +8,10 @@ pipelines and interpretable prediction models.
 ## Status
 
 The reproducible data, reliability-analysis, and interpretable-model workflows
-are complete through V1. V1.1 has begun with a frozen, time-filtered English
-review sample, a fixed interpretable sentiment feature, and a leakage-controlled
-Ridge extension. The predefined comparison did not meet either continuation
-criterion, so the current V1.1 branch stops before adding model complexity.
+are complete through V1. V1.1 is closed as a documented No-Go sentiment
+experiment: the fixed extension missed both predefined continuation criteria.
+The coverage-matched rating-only Ridge remains the preferred model. V1.2 is
+planned as a descriptive audit of when that unchanged model is less reliable.
 
 ## Real-data result snapshot
 
@@ -45,6 +45,9 @@ The same-sample overall and four-period comparison is reported in
 [`docs/v1-1-model-comparison.md`](docs/v1-1-model-comparison.md).
 The criterion-by-criterion V1.1 decision is recorded in
 [`docs/v1-1-decision.md`](docs/v1-1-decision.md).
+The final closure and deliberately omitted sensitivity analysis are recorded in
+[`docs/v1-1-closure.md`](docs/v1-1-closure.md). The frozen V1.2 scope is in
+[`docs/v1-2-error-audit-plan.md`](docs/v1-2-error-audit-plan.md).
 
 ## Quick start
 
@@ -71,7 +74,8 @@ testing, transparent evaluation, and clear research communication.
 1. How consistent are ratings across TMDB, IMDb, and MovieLens?
 2. Do platforms show stable patterns of rating higher or lower than one another?
 3. How do vote count, release year, genre, and popularity relate to differences?
-4. Does review sentiment provide additional explanatory value?
+4. Did the fixed review-sentiment extension add enough predictive value to
+   justify its added complexity?
 5. Can an interpretable baseline predict a rating or rating range with clearly
    reported error?
 

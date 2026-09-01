@@ -26,3 +26,8 @@ The fixed overall and four-period comparison is reported in
 [`v1-1-model-comparison.md`](v1-1-model-comparison.md).
 The predefined continuation decision and its scope are recorded in
 [`v1-1-decision.md`](v1-1-decision.md).
+V1.1 is formally closed, including the reason for omitting its optional weaker
+timing sensitivity analysis, in [`v1-1-closure.md`](v1-1-closure.md).
+
+The next planned research stage is the unchanged Ridge prediction-error audit
+specified in [`v1-2-error-audit-plan.md`](v1-2-error-audit-plan.md).

@@ -2,7 +2,12 @@
 
 ## Decision status
 
-**Go to a small V1.1 sentiment baseline, with strict timing filters.**
+**Historical gate result: Go to one small V1.1 sentiment baseline, with strict
+timing filters. Final V1.1 result: No-Go for further sentiment complexity.**
+
+The gate below authorized one controlled experiment. That experiment later
+missed both predefined continuation criteria and is now closed; see
+[`v1-1-closure.md`](v1-1-closure.md).
 
 The rating baseline is now evaluated on an untouched temporal holdout. This
 creates a defensible residual target for asking whether review language adds
@@ -101,6 +106,10 @@ created on or before 2023-10-13 in its primary comparison. A broader analysis
 using all pre-IMDb-snapshot reviews may be reported only as a sensitivity
 check. This decision authorizes a small sentiment baseline, not an unrestricted
 model search.
+
+After the strict primary experiment failed both continuation criteria, that
+optional weaker-timing sensitivity check was deliberately omitted because it
+could not change the primary decision.
 
 ## Interpretation boundary
 

@@ -46,3 +46,7 @@ sample, time groups, or thresholds.
 
 The generated decision SHA-256 is
 `9b31666251bc5fdecfebc83c1013dfc88e38cc430ebc28e15f4f9d0c80680129`.
+
+V1.1 is formally closed in [`v1-1-closure.md`](v1-1-closure.md). The optional
+weaker-timing sensitivity analysis is deliberately not run because it cannot
+change this primary decision.
