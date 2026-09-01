@@ -18,10 +18,10 @@ The coverage table is joined back to the ratings table using matching
 MovieLens, IMDb, and TMDB IDs. A mismatch or a coverage movie outside the fixed
 outer holdout stops the run. The model uses no sentiment value in this step.
 
-This design isolates sample composition. The next model must use the identical
-752 training rows, 149 evaluation movies, temporal partitions, preprocessing,
-alpha candidates, and metrics; its only intended difference will be the
-predefined sentiment feature.
+This design isolates sample composition. The sentiment experiment used the
+identical 752 training rows, 149 evaluation movies, temporal partitions,
+preprocessing, alpha candidates, and metrics; its only intended difference was
+the predefined sentiment feature.
 
 ## Run locally
 
@@ -45,9 +45,11 @@ again selects `alpha = 10.0`. The no-sentiment Ridge obtains MAE `0.2040`, RMSE
 average baseline has MAE `0.2273` and the training-mean baseline has MAE
 `0.7320`.
 
-The next sentiment-augmented Ridge must compare against the `0.2040` MAE on
-these exact movies. Under the predefined V1.1 success rule, its MAE must be no
-higher than `0.1940`, in addition to the separate time-subgroup criterion.
+The sentiment-augmented Ridge was compared against the `0.2040` MAE on these
+exact movies. It did not reach the required MAE of no more than `0.1940` or the
+separate time-subgroup criterion. This rating-only model is therefore preferred
+for the completed V1.1 experiment; see
+[`v1-1-closure.md`](v1-1-closure.md).
 
 The sorted 149-movie ID set has SHA-256
 `5d2edc4fbf95f7a7092be613cca17b4234b2d9c57557e200701763dcd397468f`.
