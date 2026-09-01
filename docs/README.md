@@ -24,3 +24,5 @@ The leakage-controlled sentiment extension is documented in
 [`v1-1-sentiment-ridge.md`](v1-1-sentiment-ridge.md).
 The fixed overall and four-period comparison is reported in
 [`v1-1-model-comparison.md`](v1-1-model-comparison.md).
+The predefined continuation decision and its scope are recorded in
+[`v1-1-decision.md`](v1-1-decision.md).

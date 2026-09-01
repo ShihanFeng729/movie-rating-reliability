@@ -102,8 +102,13 @@ rules.
 Run `report_v1_1_sentiment_comparison.py` to rebuild both fixed models, verify
 their outer-test rows match exactly, and report overall metrics plus the four
 predefined consecutive two-year groups. The report presents evidence only;
-the next stage applies the already fixed success decision. See
+the decision script below applies the already fixed success criteria. See
 `docs/v1-1-model-comparison.md`.
+
+Run `decide_v1_1_sentiment.py` to apply the two predefined continuation
+criteria to that fixed comparison. It writes an ignored machine-readable
+decision without changing the evidence, models, groups, or thresholds. See
+`docs/v1-1-decision.md`.
 
 ## `generate_demo_data.py`
 
