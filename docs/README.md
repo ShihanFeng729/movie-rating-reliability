@@ -22,3 +22,5 @@ The same-sample no-sentiment model comparison is specified in
 [`v1-1-coverage-matched-ridge.md`](v1-1-coverage-matched-ridge.md).
 The leakage-controlled sentiment extension is documented in
 [`v1-1-sentiment-ridge.md`](v1-1-sentiment-ridge.md).
+The fixed overall and four-period comparison is reported in
+[`v1-1-model-comparison.md`](v1-1-model-comparison.md).

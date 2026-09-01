@@ -99,6 +99,12 @@ language filter, and sentiment rule used by the outer test. Finally,
 extension. See `docs/v1-1-sentiment-ridge.md` for missing-value and validation
 rules.
 
+Run `report_v1_1_sentiment_comparison.py` to rebuild both fixed models, verify
+their outer-test rows match exactly, and report overall metrics plus the four
+predefined consecutive two-year groups. The report presents evidence only;
+the next stage applies the already fixed success decision. See
+`docs/v1-1-model-comparison.md`.
+
 ## `generate_demo_data.py`
 
 Creates the small tracked dataset used when no downloads or API credentials are

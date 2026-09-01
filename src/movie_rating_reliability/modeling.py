@@ -305,6 +305,7 @@ def evaluate_temporal_holdout(
         },
         "coefficient_stability_across_alphas": coefficient_stability,
         "grouped_holdout_errors": grouped_errors,
+        "outer_test_predictions": prediction_rows,
         "largest_absolute_errors": largest_errors,
         "error_analysis_note": (
             "Large residuals identify information absent from this baseline, such as "
