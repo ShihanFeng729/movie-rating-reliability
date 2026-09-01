@@ -10,8 +10,8 @@ pipelines and interpretable prediction models.
 The reproducible data, reliability-analysis, and interpretable-model workflows
 are complete through V1. V1.1 has begun with a frozen, time-filtered English
 review sample, a fixed interpretable sentiment feature, and a leakage-controlled
-Ridge extension. Full comparison reporting and the predefined success decision
-remain separate later steps.
+Ridge extension. The fixed same-sample comparison is reported; the predefined
+success decision remains a separate next step.
 
 ## Real-data result snapshot
 
@@ -41,6 +41,8 @@ The fair no-sentiment comparison for the same covered movies is documented in
 The training-only preprocessing and missing-text treatment for the sentiment
 extension are documented in
 [`docs/v1-1-sentiment-ridge.md`](docs/v1-1-sentiment-ridge.md).
+The same-sample overall and four-period comparison is reported in
+[`docs/v1-1-model-comparison.md`](docs/v1-1-model-comparison.md).
 
 ## Quick start
 
