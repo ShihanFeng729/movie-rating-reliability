@@ -13,7 +13,9 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from movie_rating_reliability.review_coverage import (  # noqa: E402
     audit_review_coverage,
+    collect_review_coverage,
     temporal_holdout_rows,
+    temporal_training_rows,
 )
 
 
@@ -62,6 +64,27 @@ class ReviewCoverageTests(unittest.TestCase):
                 path, test_fraction=0.2, minimum_test_movies=2
             )
             self.assertEqual([row["release_year"] for row in rows], ["2008", "2009"])
+            training = temporal_training_rows(
+                path, test_fraction=0.2, minimum_test_movies=2
+            )
+            self.assertEqual(len(training), 8)
+            self.assertEqual(training[-1]["release_year"], "2007")
+
+    def test_explicit_population_collection_supports_bounded_workers(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "data.csv"
+            self._write_dataset(path, count=6)
+            population = temporal_training_rows(
+                path, test_fraction=0.33, minimum_test_movies=2
+            )
+            summary = collect_review_coverage(
+                FakeReviewClient(), population, root / "raw", root / "summary.json",
+                stage="training_test", population_name="training", workers=2,
+            )
+            self.assertEqual(summary["population_movie_count"], 4)
+            self.assertEqual(summary["audited_movie_count"], 4)
+            self.assertEqual(summary["failed_movie_count"], 0)
 
     def test_audit_summarizes_coverage_without_review_text(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

@@ -114,6 +114,7 @@ def evaluate_temporal_holdout(
     path: Path, *, test_fraction: float = 0.2, minimum_test_movies: int = 100,
     alpha: float | None = None,
     outer_test_movie_ids: set[str] | None = None,
+    extra_numeric_fields: tuple[str, ...] = (),
 ) -> dict[str, object]:
     """Evaluate Ridge on the newest movies, with preprocessing fixed by the file."""
 
@@ -125,6 +126,7 @@ def evaluate_temporal_holdout(
         "release_year", "genres", "tmdb_rating_10", "tmdb_vote_count",
         "imdb_rating_10", "movielens_rating_10", "movielens_rating_count",
     }
+    required.update(extra_numeric_fields)
     if not rows or not required.issubset(rows[0]):
         raise ValueError("Real V1 dataset is empty or missing required columns.")
     complete = [row for row in rows if all(row[column].strip() for column in required)]
@@ -164,7 +166,9 @@ def evaluate_temporal_holdout(
     )
     inner_train_rows = train_rows[:-validation_size]
     validation_rows = train_rows[-validation_size:]
-    inner_transform, _, _ = _fit_real_transformer(inner_train_rows)
+    inner_transform, _, _ = _fit_real_transformer(
+        inner_train_rows, extra_numeric_fields=extra_numeric_fields
+    )
     inner_train_features = [inner_transform(row) for row in inner_train_rows]
     validation_features = [inner_transform(row) for row in validation_rows]
     inner_train_targets = [float(row["imdb_rating_10"]) for row in inner_train_rows]
@@ -186,7 +190,9 @@ def evaluate_temporal_holdout(
     selected_alpha = alpha if alpha is not None else min(
         alpha_validation, key=lambda item: (item["validation_mae"], item["alpha"])
     )["alpha"]
-    transform, reference_genre, encoded_genres = _fit_real_transformer(train_rows)
+    transform, reference_genre, encoded_genres = _fit_real_transformer(
+        train_rows, extra_numeric_fields=extra_numeric_fields
+    )
     train_features = [transform(row) for row in train_rows]
     test_features = [transform(row) for row in test_rows]
     train_targets = [float(row["imdb_rating_10"]) for row in train_rows]
@@ -209,6 +215,7 @@ def evaluate_temporal_holdout(
         "log10_tmdb_vote_count_standardized",
         "log10_movielens_rating_count_standardized",
         "release_decades_since_2000_standardized",
+        *(f"{field}_standardized" for field in extra_numeric_fields),
         *(f"genre_{genre}" for genre in encoded_genres),
     ]
     coefficient_names = ["intercept", *feature_names]
@@ -265,6 +272,7 @@ def evaluate_temporal_holdout(
         "test_movie_count": len(test_rows),
         "full_outer_test_movie_count": len(full_test_rows),
         "outer_test_coverage_filter_applied": outer_test_movie_ids is not None,
+        "extra_numeric_fields": list(extra_numeric_fields),
         "test_year_min": min(int(row["release_year"]) for row in test_rows),
         "test_year_max": max(int(row["release_year"]) for row in test_rows),
         "ridge_alpha": selected_alpha,
@@ -311,13 +319,18 @@ def evaluate_temporal_holdout(
 
 def _fit_real_transformer(
     training_rows: list[dict[str, str]],
+    *,
+    extra_numeric_fields: tuple[str, ...] = (),
 ) -> tuple[Callable[[dict[str, str]], list[float]], str, list[str]]:
     """Fit numeric scaling and genre encoding on one training partition only."""
 
     train_genres = sorted({_primary_genre(row["genres"]) for row in training_rows})
     reference_genre = train_genres[0]
     encoded_genres = train_genres[1:]
-    train_numeric = [_real_numeric_features(row) for row in training_rows]
+    train_numeric = [
+        _real_numeric_features(row, extra_numeric_fields=extra_numeric_fields)
+        for row in training_rows
+    ]
     means = [fmean(column) for column in zip(*train_numeric)]
     scales = [
         math.sqrt(fmean((value - mean) ** 2 for value in column)) or 1.0
@@ -325,7 +338,9 @@ def _fit_real_transformer(
     ]
 
     def transform(row: dict[str, str]) -> list[float]:
-        numeric = _real_numeric_features(row)
+        numeric = _real_numeric_features(
+            row, extra_numeric_fields=extra_numeric_fields
+        )
         genre = _primary_genre(row["genres"])
         return [
             *((value - mean) / scale for value, mean, scale in zip(numeric, means, scales)),
@@ -335,7 +350,9 @@ def _fit_real_transformer(
     return transform, reference_genre, encoded_genres
 
 
-def _real_numeric_features(row: dict[str, str]) -> list[float]:
+def _real_numeric_features(
+    row: dict[str, str], *, extra_numeric_fields: tuple[str, ...] = ()
+) -> list[float]:
     tmdb_count = int(row["tmdb_vote_count"])
     movielens_count = int(row["movielens_rating_count"])
     if tmdb_count <= 0 or movielens_count <= 0:
@@ -346,6 +363,7 @@ def _real_numeric_features(row: dict[str, str]) -> list[float]:
         math.log10(tmdb_count),
         math.log10(movielens_count),
         (int(row["release_year"]) - 2000) / 10,
+        *(float(row[field]) for field in extra_numeric_fields),
     ]
 
 
